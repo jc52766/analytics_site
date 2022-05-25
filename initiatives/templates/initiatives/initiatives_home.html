@@ -1,6 +1,5 @@
 {% extends "initiatives/base.html" %}
+{% load static %}
 {% block content %}
-{% for num in nums %}
-    <h2>{{ num }}</h2>
-{% endfor %}
+    <img id="project_image" src="{% static 'initiatives/Transformation.PNG' %}" alt="Project img">
 {% endblock content %}
