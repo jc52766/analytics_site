@@ -35,13 +35,24 @@ def supplementary_sourcing(request):
 
 def primary_processing(request):
     client = hlp.connectBQ()
-    df = (client.query(f'SELECT * FROM `gcp-wow-pvc-grnstck-prod.project_site.cost_per_kg`').to_dataframe())
-    # for i,r in df.iterrows():
-    #     print(r)
+    
+    # get cost per kg data
+    df_cost_per_kg = (client.query(f'SELECT * FROM `gcp-wow-pvc-grnstck-prod.project_site.cost_per_kg` order by rank').to_dataframe())
+    # add formatted columns for display purposes
+    for col in ['Tamworth', 'Naracoorte', 'Total_East_Coast', 'ACC', 'VV_Walsh', 'Total_West_Coast']:
+        df_cost_per_kg[col+'_formatted'] = list(map(lambda x: "${:,.2f}".format(x), df_cost_per_kg[col]))
+    
+    # get cost per kg data
+    df_heads = (client.query(f'SELECT * FROM `gcp-wow-pvc-grnstck-prod.project_site.heads` order by rank').to_dataframe())
+    # add formatted columns for display purposes
+    for col in ['Tamworth', 'Naracoorte', 'Total_East_Coast', 'ACC', 'VV_Walsh', 'Total_West_Coast']:
+        df_heads[col+'_formatted'] = list(map(lambda x: "{:,}".format(x), df_heads[col]))
+    
     return render(request, 'initiatives/primary_processing.html',
                   {'title': 'Primary Processing',
                    'subheading': 'Primary Processing page',
-                   'df_cost_per_kg': df
+                   'df_cost_per_kg': df_cost_per_kg,
+                   'df_heads': df_heads,
                   })
 
 def inv_and_prod(request):

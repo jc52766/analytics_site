@@ -68,10 +68,10 @@
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
     google.charts.load('current', {'packages':['table']});
-    google.charts.setOnLoadCallback(drawEastCoastTableREALDATA);
-    google.charts.setOnLoadCallback(drawWestCoastTable);
+    google.charts.setOnLoadCallback(drawCostPerKGTable);
+    google.charts.setOnLoadCallback(drawHeadsTable);
 
-    function drawEastCoastTableREALDATA() {
+    function drawCostPerKGTable() {
 
         var cssClassNames = {
             'headerRow': 'large-font bold-font ',
@@ -83,29 +83,35 @@
             'tableCell': 'custom-table-td',
             'rowNumberCell': 'underline-blue-font'};
         
-        var options = {'showRowNumber': false, 'allowHtml': true, 'cssClassNames': cssClassNames, 'width': '25%'};
+        var options = {'showRowNumber': false, 'allowHtml': true, 'cssClassNames': cssClassNames, 'width': '45%'};
 
         var data = new google.visualization.DataTable();
         data.addColumn('string', 'Metric');
         data.addColumn('number', 'Tamworth');
         data.addColumn('number', 'Naracoorte');
         data.addColumn('number', 'Total East Coast');
-        data.addRows(4);
+        data.addColumn('number', 'ACC');
+        data.addColumn('number', 'VV Walsh');
+        data.addColumn('number', 'Total West Coast');
 
         {% for i,row in df_cost_per_kg.iterrows %}
+            data.addRows( 1 );
             data.setCell({{ i }}, 0, '{{ row.Metric }}');
-            data.setCell({{ i }}, 1, {{ row.Tamworth }});
-            data.setCell({{ i }}, 2, {{ row.Naracoorte }});
-            data.setCell({{ i }}, 3, {{ row.Total_East_Coast }});
+            data.setCell({{ i }}, 1, {{ row.Tamworth }}, '{{ row.Tamworth_formatted }}' );
+            data.setCell({{ i }}, 2, {{ row.Naracoorte }}, '{{ row.Naracoorte_formatted }}' );
+            data.setCell({{ i }}, 3, {{ row.Total_East_Coast }}, '{{ row.Total_East_Coast_formatted }}');
+            data.setCell({{ i }}, 4, {{ row.ACC }}, '{{ row.ACC_formatted }}' );
+            data.setCell({{ i }}, 5, {{ row.VV_Walsh }}, '{{ row.VV_Walsh_formatted }}' );
+            data.setCell({{ i }}, 6, {{ row.Total_West_Coast }}, '{{ row.Total_West_Coast_formatted }}' );
         {% endfor %}
 
-        var table = new google.visualization.Table(document.getElementById('table_primary_processing_east_coast'));
+        var table = new google.visualization.Table(document.getElementById('table_cost_per_kg'));
 
         table.draw(data, options);
 
     }
 
-    function drawEastCoastTable() {
+    function drawHeadsTable() {
 
         var cssClassNames = {
             'headerRow': 'large-font bold-font ',
@@ -117,72 +123,29 @@
             'tableCell': 'custom-table-td',
             'rowNumberCell': 'underline-blue-font'};
         
-        var options = {'showRowNumber': false, 'allowHtml': true, 'cssClassNames': cssClassNames, 'width': '25%'};
+        var options = {'showRowNumber': false, 'allowHtml': true, 'cssClassNames': cssClassNames, 'width': '45%'};
 
         var data = new google.visualization.DataTable();
         data.addColumn('string', 'Metric');
         data.addColumn('number', 'Tamworth');
         data.addColumn('number', 'Naracoorte');
         data.addColumn('number', 'Total East Coast');
-        data.addRows(4);
-
-        data.setCell(0, 0, 'Last 30 days Average');
-        data.setCell(0, 1, 1.30, '$1.30');
-        data.setCell(0, 2, 1.42, '$1.42');
-        data.setCell(0, 3, 1.35, '$1.35');
-        data.setCell(1, 0, 'Prior FY Average');
-        data.setCell(1, 1, 1.28, '$1.28');
-        data.setCell(1, 2, 1.44, '$1.44');
-        data.setCell(1, 3, 1.30, '$1.35');
-        data.setCell(2, 0, 'Current FY Average');
-        data.setCell(2, 1, 1.30, '$1.30');
-        data.setCell(2, 2, 1.44, '$1.44');
-        data.setCell(2, 3, 1.36, '$1.36');
-        data.setCell(3, 0, 'Target');
-        data.setCell(3, 1, 1.25, '$1.25', {'style': 'background-color: red;'});
-        data.setCell(3, 2, 1.25, '$1.25', {'style': 'background-color: red;'});
-        data.setCell(3, 3, 1.25, '$1.25', {'style': 'background-color: red;'});
-
-        var table = new google.visualization.Table(document.getElementById('table_primary_processing_east_coast'));
-
-        table.draw(data, options);
-
-    }
-
-    function drawWestCoastTable() {
-
-        var cssClassNames = {
-            'headerRow': 'large-font bold-font ',
-            'tableRow': '',
-            'oddTableRow': 'beige-background',
-            'selectedTableRow': 'orange-background large-font',
-            'hoverTableRow': '',
-            'headerCell': 'gold-border',
-            'tableCell': 'custom-table-td',
-            'rowNumberCell': 'underline-blue-font'};
-        
-        var options = {'showRowNumber': false, 'allowHtml': true, 'cssClassNames': cssClassNames, 'width': '25%'};
-
-        var data = new google.visualization.DataTable();
-        data.addColumn('string', 'Metric');
         data.addColumn('number', 'ACC');
+        data.addColumn('number', 'VV Walsh');
         data.addColumn('number', 'Total West Coast');
-        data.addRows(4);       
 
-        data.setCell(0, 0, 'Last 30 days Average');
-        data.setCell(0, 1, 1.40, '$1.30');
-        data.setCell(0, 2, 1.40, '$1.42');
-        data.setCell(1, 0, 'Prior FY Average');
-        data.setCell(1, 1, 1.38, '$1.28');
-        data.setCell(1, 2, 1.38, '$1.44');
-        data.setCell(2, 0, 'Current FY Average');
-        data.setCell(2, 1, 1.39, '$1.30');
-        data.setCell(2, 2, 1.39, '$1.44');
-        data.setCell(3, 0, 'Target');
-        data.setCell(3, 1, 1.25, '$1.30', {'style': 'background-color: red;'});
-        data.setCell(3, 2, 1.25, '$1.30', {'style': 'background-color: red;'});
+        {% for i,row in df_heads.iterrows %}
+            data.addRows( 1 );
+            data.setCell({{ i }}, 0, '{{ row.Metric }}');
+            data.setCell({{ i }}, 1, {{ row.Tamworth }}, '{{ row.Tamworth_formatted }}' );
+            data.setCell({{ i }}, 2, {{ row.Naracoorte }}, '{{ row.Naracoorte_formatted }}' );
+            data.setCell({{ i }}, 3, {{ row.Total_East_Coast }}, '{{ row.Total_East_Coast_formatted }}');
+            data.setCell({{ i }}, 4, {{ row.ACC }}, '{{ row.ACC_formatted }}' );
+            data.setCell({{ i }}, 5, {{ row.VV_Walsh }}, '{{ row.VV_Walsh_formatted }}' );
+            data.setCell({{ i }}, 6, {{ row.Total_West_Coast }}, '{{ row.Total_West_Coast_formatted }}' );
+        {% endfor %}
 
-        var table = new google.visualization.Table(document.getElementById('table_primary_processing_west_coast'));
+        var table = new google.visualization.Table(document.getElementById('table_heads'));
 
         table.draw(data, options);
 
@@ -195,15 +158,10 @@
     <br></br>
 
     <div><h4>Cost per KG</h4></div>   
-    <div id="table_primary_processing_east_coast" class="table_div"></div>
+    <div id="table_cost_per_kg" class="table_div"></div>
 
     <br></br>
-    <div id="table_primary_processing_west_coast" class="table_div"></div>
-
-    {% comment %} {% for i,row in df_cost_per_kg.iterrows %}
-        {% for column in row %}
-            <div>{{ column }}</div>
-        {% endfor %}
-    {% endfor %} {% endcomment %}
+    <div><h4>#Heads</h4></div>   
+    <div id="table_heads" class="table_div"></div>
 
 {% endblock content %}
