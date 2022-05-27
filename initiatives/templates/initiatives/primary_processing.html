@@ -1,4 +1,5 @@
 {% extends "initiatives/base.html" %}
+{% load static %}
 {% block headcontent %}
 
 <style>
@@ -96,7 +97,7 @@
 
         {% for i,row in df_cost_per_kg.iterrows %}
             data.addRows( 1 );
-            data.setCell({{ i }}, 0, '{{ row.Metric }}');
+            data.setCell({{ i }}, 0, '{{ row.Metric }}', '{{ row.Metric }}', {'style': 'font-weight: bold;'});
             data.setCell({{ i }}, 1, {{ row.Tamworth }}, '{{ row.Tamworth_formatted }}' );
             data.setCell({{ i }}, 2, {{ row.Naracoorte }}, '{{ row.Naracoorte_formatted }}' );
             data.setCell({{ i }}, 3, {{ row.Total_East_Coast }}, '{{ row.Total_East_Coast_formatted }}');
@@ -136,7 +137,7 @@
 
         {% for i,row in df_heads.iterrows %}
             data.addRows( 1 );
-            data.setCell({{ i }}, 0, '{{ row.Metric }}');
+            data.setCell({{ i }}, 0, '{{ row.Metric }}', '{{ row.Metric }}', {'style': 'font-weight: bold;'});
             data.setCell({{ i }}, 1, {{ row.Tamworth }}, '{{ row.Tamworth_formatted }}' );
             data.setCell({{ i }}, 2, {{ row.Naracoorte }}, '{{ row.Naracoorte_formatted }}' );
             data.setCell({{ i }}, 3, {{ row.Total_East_Coast }}, '{{ row.Total_East_Coast_formatted }}');
@@ -164,4 +165,11 @@
     <div><h4>#Heads</h4></div>   
     <div id="table_heads" class="table_div"></div>
 
+    <br></br>
+    <br></br>
+    <div>Processing fees (Tableau)</div>
+    <a href="https://tableau.woolworths.com.au/#/site/Greenstock/views/AllProcessingFees/CostPerHead" target="_blank">
+        <img id="proc_fees_tableau_image" src="{% static 'initiatives/proc_fees_tableau.PNG' %}" alt="proc_fees_tableau_image"
+        width="200" height="150"></img>
+     </a>
 {% endblock content %}
