@@ -1,0 +1,175 @@
+{% extends "initiatives/base.html" %}
+{% load static %}
+{% block headcontent %}
+
+<style>
+    .bold-green-font {
+      font-weight: bold;
+      color: green;
+    }
+  
+    .bold-font {
+      font-weight: bold;
+    }
+  
+    .right-text {
+      text-align: right;
+    }
+  
+    .large-font {
+      font-size: 15px;
+    }
+  
+    .italic-darkblue-font {
+      font-style: italic;
+      color: darkblue;
+    }
+  
+    .italic-purple-font {
+      font-style: italic;
+      color: purple;
+    }
+  
+    .underline-blue-font {
+      text-decoration: underline;
+      color: blue;
+    }
+  
+    .gold-border {
+      border: 3px solid gold;
+    }
+  
+    .deeppink-border {
+      border: 3px solid deeppink;
+    }
+  
+    .orange-background {
+      background-color: orange;
+    }
+  
+    .orchid-background {
+      background-color: orchid;
+    }
+  
+    .beige-background {
+      background-color: beige;
+    }
+
+    .gray-background {
+        background-color: gray;
+      }
+
+    .google-visualization-table-table td.custom-table-td {
+        border: solid black;
+        border-width: 2px 2px 1px 1px;
+    }
+  
+    </style>
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+    google.charts.load('current', {'packages':['table']});
+    google.charts.setOnLoadCallback(drawCostPerKGTable);
+    google.charts.setOnLoadCallback(drawHeadsTable);
+
+    function drawCostPerKGTable() {
+
+        var cssClassNames = {
+            'headerRow': 'large-font bold-font ',
+            'tableRow': '',
+            'oddTableRow': 'beige-background',
+            'selectedTableRow': 'orange-background large-font',
+            'hoverTableRow': '',
+            'headerCell': 'gold-border',
+            'tableCell': 'custom-table-td',
+            'rowNumberCell': 'underline-blue-font'};
+        
+        var options = {'showRowNumber': false, 'allowHtml': true, 'cssClassNames': cssClassNames, 'width': '45%'};
+
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Metric');
+        data.addColumn('number', 'Tamworth');
+        data.addColumn('number', 'Naracoorte');
+        data.addColumn('number', 'Total East Coast');
+        data.addColumn('number', 'ACC');
+        data.addColumn('number', 'VV Walsh');
+        data.addColumn('number', 'Total West Coast');
+
+        {% for i,row in df_cost_per_kg.iterrows %}
+            data.addRows( 1 );
+            data.setCell({{ i }}, 0, '{{ row.Metric }}', '{{ row.Metric }}', {'style': 'font-weight: bold;'});
+            data.setCell({{ i }}, 1, {{ row.Tamworth }}, '{{ row.Tamworth_formatted }}' );
+            data.setCell({{ i }}, 2, {{ row.Naracoorte }}, '{{ row.Naracoorte_formatted }}' );
+            data.setCell({{ i }}, 3, {{ row.Total_East_Coast }}, '{{ row.Total_East_Coast_formatted }}');
+            data.setCell({{ i }}, 4, {{ row.ACC }}, '{{ row.ACC_formatted }}' );
+            data.setCell({{ i }}, 5, {{ row.VV_Walsh }}, '{{ row.VV_Walsh_formatted }}' );
+            data.setCell({{ i }}, 6, {{ row.Total_West_Coast }}, '{{ row.Total_West_Coast_formatted }}' );
+        {% endfor %}
+
+        var table = new google.visualization.Table(document.getElementById('table_cost_per_kg'));
+
+        table.draw(data, options);
+
+    }
+
+    function drawHeadsTable() {
+
+        var cssClassNames = {
+            'headerRow': 'large-font bold-font ',
+            'tableRow': '',
+            'oddTableRow': 'beige-background',
+            'selectedTableRow': 'orange-background large-font',
+            'hoverTableRow': '',
+            'headerCell': 'gold-border',
+            'tableCell': 'custom-table-td',
+            'rowNumberCell': 'underline-blue-font'};
+        
+        var options = {'showRowNumber': false, 'allowHtml': true, 'cssClassNames': cssClassNames, 'width': '45%'};
+
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Metric');
+        data.addColumn('number', 'Tamworth');
+        data.addColumn('number', 'Naracoorte');
+        data.addColumn('number', 'Total East Coast');
+        data.addColumn('number', 'ACC');
+        data.addColumn('number', 'VV Walsh');
+        data.addColumn('number', 'Total West Coast');
+
+        {% for i,row in df_heads.iterrows %}
+            data.addRows( 1 );
+            data.setCell({{ i }}, 0, '{{ row.Metric }}', '{{ row.Metric }}', {'style': 'font-weight: bold;'});
+            data.setCell({{ i }}, 1, {{ row.Tamworth }}, '{{ row.Tamworth_formatted }}' );
+            data.setCell({{ i }}, 2, {{ row.Naracoorte }}, '{{ row.Naracoorte_formatted }}' );
+            data.setCell({{ i }}, 3, {{ row.Total_East_Coast }}, '{{ row.Total_East_Coast_formatted }}');
+            data.setCell({{ i }}, 4, {{ row.ACC }}, '{{ row.ACC_formatted }}' );
+            data.setCell({{ i }}, 5, {{ row.VV_Walsh }}, '{{ row.VV_Walsh_formatted }}' );
+            data.setCell({{ i }}, 6, {{ row.Total_West_Coast }}, '{{ row.Total_West_Coast_formatted }}' );
+        {% endfor %}
+
+        var table = new google.visualization.Table(document.getElementById('table_heads'));
+
+        table.draw(data, options);
+
+    }
+
+    </script>
+{% endblock headcontent %}
+
+{% block content %}
+    <br></br>
+
+    <div><h4>Cost per KG</h4></div>   
+    <div id="table_cost_per_kg" class="table_div"></div>
+
+    <br></br>
+    <div><h4>#Heads</h4></div>   
+    <div id="table_heads" class="table_div"></div>
+
+    <br></br>
+    <br></br>
+    <div>Processing fees (Tableau)</div>
+    <a href="https://tableau.woolworths.com.au/#/site/Greenstock/views/AllProcessingFees/CostPerHead" target="_blank">
+        <img id="proc_fees_tableau_image" src="{% static 'initiatives/proc_fees_tableau.PNG' %}" alt="proc_fees_tableau_image"
+        width="200" height="150"></img>
+     </a>
+{% endblock content %}
