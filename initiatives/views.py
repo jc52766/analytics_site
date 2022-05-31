@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from . import helpers as hlp
-
+import pandas as pd
 
 # Create your views here.
 def home(request):
@@ -34,16 +34,18 @@ def supplementary_sourcing(request):
                   })
 
 def primary_processing(request):
-    client = hlp.connectBQ()
-    
+    storage_client = hlp.connectStorage()
+
     # get cost per kg data
-    df_cost_per_kg = (client.query(f'SELECT * FROM `gcp-wow-pvc-grnstck-prod.project_site.cost_per_kg` order by rank').to_dataframe())
+    df_cost_per_kg = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/cost_per_kg.json').download_as_string(), lines=True) 
+    
     # add formatted columns for display purposes
     for col in ['Tamworth', 'Naracoorte', 'Total_East_Coast', 'ACC', 'VV_Walsh', 'Total_West_Coast']:
         df_cost_per_kg[col+'_formatted'] = list(map(lambda x: "${:,.2f}".format(x), df_cost_per_kg[col]))
     
     # get cost per kg data
-    df_heads = (client.query(f'SELECT * FROM `gcp-wow-pvc-grnstck-prod.project_site.heads` order by rank').to_dataframe())
+    df_heads = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/heads.json').download_as_string(), lines=True) 
+    
     # add formatted columns for display purposes
     for col in ['Tamworth', 'Naracoorte', 'Total_East_Coast', 'ACC', 'VV_Walsh', 'Total_West_Coast']:
         df_heads[col+'_formatted'] = list(map(lambda x: "{:,}".format(x), df_heads[col]))
