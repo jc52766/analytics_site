@@ -4,29 +4,63 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" type="text/css" href="{% static 'initiatives/main.css' %}">
-        {% comment %} <link rel="stylesheet" type="text/css" href="{% static 'initiatives/slate_bootstrap.css' %}"> {% endcomment %}
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
         {% block headcontent %}{% endblock headcontent %}
     </head>
-    <body onload="openNav();">
-
+    <body>
 
         <div id="mySidebar" class="sidebar">
             <!-- <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a> -->
-            <a href="{% url 'initiatives_home' %}">Home</a>
-            <a href="{% url 'channel_strategy' %}">Channel Strategy</a>
-            <a href="{% url 'demand_forecasting' %}">Demand Forecasting</a>
-            <a href="{% url 'livestock_sourcing' %}">Livestock Sourcing</a>
-            <a href="{% url 'supplementary_sourcing' %}">Supp. Sourcing</a>
-            <a href="{% url 'primary_processing' %}">Primary Processing</a>
-            <a href="{% url 'inv_and_prod' %}">Inventory & Production</a>
-            <a href="{% url 'secondary_processing' %}">Secondary Processing</a>
-            <a href="{% url 'retail_and_b2b_sales' %}">Retail & B2B Sales</a>
+            <nav class="nav-0" id="nav0">
+                
+                <h4 class="groupHeader" id="groupHeader-1">About Greenstock</h4>
+                <ul id="groupContainer-1" style="display:none">
+                    <li><a>s1</a></li>
+                    <li><a>s2</a></li>
+                    <li><a>s3</a></li>
+                    <li><a>s4</a></li>
+                </ul>
+
+                <h4 class="groupHeader" id="groupHeader-2">Projects</h4>
+                    <ul id="groupContainer-2">
+                    <li><a href="{% url 'initiatives_home' %}">Home</a></li>
+                    <li><a href="{% url 'channel_strategy' %}">Channel Strategy</a></li>
+                    <li><a href="{% url 'demand_forecasting' %}">Demand Forecasting</a></li>
+                    <li><a href="{% url 'livestock_sourcing' %}">Livestock Sourcing</a></li>
+                    <li><a href="{% url 'supplementary_sourcing' %}">Supp. Sourcing</a></li>
+                    <li><a href="{% url 'primary_processing' %}">Primary Processing</a></li>
+                    <li><a href="{% url 'inv_and_prod' %}">Inventory & Production</a></li>
+                    <li><a href="{% url 'secondary_processing' %}">Secondary Processing</a></li>
+                    <li><a href="{% url 'retail_and_b2b_sales' %}">Retail & B2B Sales</a></li>
+                </ul>
+
+                <h4 class="groupHeader" id="groupHeader-3">Analytics</h4>
+                <ul id="groupContainer-3" style="display:none">
+                    <li><a>s1</a></li>
+                    <li><a>s2</a></li>
+                    <li><a>s3</a></li>
+                    <li><a>s4</a></li>
+                </ul>
+
+                <h4  class="groupHeader"id="groupHeader-4">...</h4>
+                <ul id="groupContainer-4" style="display:none">
+                    <li><a>s1</a></li>
+                    <li><a>s2</a></li>
+                    <li><a>s3</a></li>
+                </ul>
+
+                <h4  class="groupHeader"id="groupHeader-5">...</h4>
+                <ul id="groupContainer-5" style="display:none">
+                    <li><a>s1</a></li>
+                    <li><a>s2</a></li>
+                    <li><a>s3</a></li>
+                </ul>
+            </nav>
         </div>
 
         <div id="main">
-            <!-- <button class="openbtn" onclick="openNav()">☰</button>   -->
+
             {% if title %}
                 <h2>{{ title }}</h2>
             {% else %}
@@ -48,15 +82,22 @@
     </body>
 
     <script>
-     function openNav() {
-         $("#mySidebar").css("width","250px");
-         $("#main").css("marginLeft","250px");
-     }
 
-     function closeNav() {
-         //$("#mySidebar").css("width","0");
-         //$("#main").css("marginLeft","0");
-     }
+    function clickGroupHeader () {
+        var groupIdx = $(this).attr('id').replace('groupHeader-', '')
+        var $examplesList = $('#groupContainer-' + groupIdx)
+        if ($examplesList.css('display') === 'none') {
+          $examplesList.slideDown('fast')
+        } else {
+          $examplesList.slideUp('fast')
+        }
+      }
+    
+    function init () {
+        $('#nav0').on('click', 'h4', clickGroupHeader)
+    }
+
+    $(document).ready(init)
     </script>
 
 

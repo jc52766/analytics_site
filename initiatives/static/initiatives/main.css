@@ -4,37 +4,38 @@ body {
   
   .sidebar {
     height: 100%;
-    width: 00;
+    width: 220;
     position: fixed;
     z-index: 1;
     top: 0;
     left: 0;
-    background-color: #111;
+    /* background-color: #111; */
     overflow-x: hidden;
-    transition: 0.5s;
-    padding-top: 60px;
+    transition: 0.0s;
+    padding-top: 20px;
   }
   
-  .sidebar a {
+  .sidebar a h4 {
     padding: 8px 8px 8px 32px;
     text-decoration: none;
-    font-size: 20px;
+    font-size: 14px;
     color: #818181;
     display: block;
-    transition: 0.3s;
+    transition: 0.0s;
   }
+
   
   .sidebar a:hover {
     color: #f1f1f1;
   }
   
-  .sidebar .closebtn {
+  /* .sidebar .closebtn {
     position: absolute;
     top: 0;
     right: 25px;
     font-size: 36px;
     margin-left: 50px;
-  }
+  }  
   
   .openbtn {
     font-size: 20px;
@@ -47,11 +48,12 @@ body {
   
   .openbtn:hover {
     background-color: #444;
-  }
+  } */
   
   #main {
-    transition: margin-left .5s;
-    padding: 16px;
+    /* transition: margin-left .0s; */
+    padding-top: 10px;
+    padding-left: 220px;
   }
   
   /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
@@ -89,3 +91,73 @@ body {
     /* margin: auto; */
 }
 
+
+
+/* .nav-0 {
+  flex: 25;
+  padding-top: 0px;
+} */
+
+.nav-0 {
+  flex: 75;
+  padding-top: 0px;
+  width: 200px;
+}
+
+.nav-0 h4 {
+  background: #f2f2f2;
+  border-top: 1px solid #e6e6e6;
+  border-right: 1px solid #e6e6e6;
+  border-left: 3px solid #ccc;
+  color: #555;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0px;
+  padding: 15px 20px;
+  text-transform: none;
+}
+
+.nav-0 h4.active {
+  background: #4d4d4d;
+  border-top: 1px solid #1a1a1a;
+  border-right: 1px solid #1a1a1a;
+  border-left: 4px solid #1a1a1a;
+  color: #fff;
+  font-weight: bold;
+}
+
+.nav-0 ul {
+  border-left: 3px solid #eee;
+  border-right: 1px solid #eee;
+  margin: 0;
+  padding: 10px 0px;
+}
+
+.nav-0 li {
+  color: #666;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.6;
+  list-style: none;
+  padding: 5px 0px 5px 15px;
+}
+
+.nav-0 li:hover {
+  color: #222;
+}
+
+.nav-0 li.active {
+  color: #222;
+  font-weight: bold;
+}
+
+.groupHeader h4 {
+  color: #eee;
+  cursor: pointer;
+}
+
+.nav-0 li a {
+  color: #666;
+  text-decoration: none;
+}
