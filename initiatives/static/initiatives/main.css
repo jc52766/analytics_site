@@ -1,70 +1,16 @@
 body {
     font-family: "Lato", sans-serif;
   }
-  
-  .sidebar {
-    height: 100%;
-    width: 220;
-    position: fixed;
-    z-index: 1;
-    top: 0;
-    left: 0;
-    /* background-color: #111; */
-    overflow-x: hidden;
-    transition: 0.0s;
-    padding-top: 20px;
-  }
-  
-  .sidebar a h4 {
-    padding: 8px 8px 8px 32px;
-    text-decoration: none;
-    font-size: 14px;
-    color: #818181;
-    display: block;
-    transition: 0.0s;
-  }
+    
+#main {
+  /* transition: margin-left .0s; */
+  padding-top: 10px;
+  padding-left: 20px;
+}
 
-  
-  .sidebar a:hover {
-    color: #f1f1f1;
-  }
-  
-  /* .sidebar .closebtn {
-    position: absolute;
-    top: 0;
-    right: 25px;
-    font-size: 36px;
-    margin-left: 50px;
-  }  
-  
-  .openbtn {
-    font-size: 20px;
-    cursor: pointer;
-    background-color: #111;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-  }
-  
-  .openbtn:hover {
-    background-color: #444;
-  } */
-  
-  #main {
-    /* transition: margin-left .0s; */
-    padding-top: 10px;
-    padding-left: 220px;
-  }
-  
-  /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
-  @media screen and (max-height: 450px) {
-    .sidebar {padding-top: 15px;}
-    .sidebar a {font-size: 18px;}
-  }
-
-  .plotContainer {
-    display:flex;
-    padding-left: 250px;
+.plotContainer {
+  display:flex;
+  padding-left: 20px;
 }
 
 .fixed {
@@ -76,14 +22,7 @@ body {
 
 .tableauContainer {
     display:flex;
-    padding-left: 250px;
-}
-
-.dt {
-    margin: auto;
-    display:flex;
-    padding-left: 250px;
-    padding-top: 100px;
+    padding-left: 20px;
 }
 
 #project_image {
@@ -91,73 +30,71 @@ body {
     /* margin: auto; */
 }
 
-
-
-/* .nav-0 {
-  flex: 25;
-  padding-top: 0px;
-} */
-
-.nav-0 {
-  flex: 75;
-  padding-top: 0px;
-  width: 200px;
+.navbar {
+  overflow: hidden;
+  background-color: #333;
+  font-family: Arial;
 }
 
-.nav-0 h4 {
-  background: #f2f2f2;
-  border-top: 1px solid #e6e6e6;
-  border-right: 1px solid #e6e6e6;
-  border-left: 3px solid #ccc;
-  color: #555;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  margin: 0px;
-  padding: 15px 20px;
-  text-transform: none;
-}
-
-.nav-0 h4.active {
-  background: #4d4d4d;
-  border-top: 1px solid #1a1a1a;
-  border-right: 1px solid #1a1a1a;
-  border-left: 4px solid #1a1a1a;
-  color: #fff;
-  font-weight: bold;
-}
-
-.nav-0 ul {
-  border-left: 3px solid #eee;
-  border-right: 1px solid #eee;
-  margin: 0;
-  padding: 10px 0px;
-}
-
-.nav-0 li {
-  color: #666;
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1.6;
-  list-style: none;
-  padding: 5px 0px 5px 15px;
-}
-
-.nav-0 li:hover {
-  color: #222;
-}
-
-.nav-0 li.active {
-  color: #222;
-  font-weight: bold;
-}
-
-.groupHeader h4 {
-  color: #eee;
-  cursor: pointer;
-}
-
-.nav-0 li a {
-  color: #666;
+/* Links inside the navbar */
+.navbar a {
+  float: left;
+  font-size: 16px;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
   text-decoration: none;
+}
+
+/* The dropdown container */
+.dropdown {
+  float: left;
+  overflow: hidden;
+}
+
+/* Dropdown button */
+.dropdown .dropbtn {
+  font-size: 16px;
+  border: none;
+  outline: none;
+  color: white;
+  padding: 14px 16px;
+  background-color: inherit;
+  font-family: inherit; /* Important for vertical align on mobile phones */
+  margin: 0; /* Important for vertical align on mobile phones */
+}
+
+/* Add a red background color to navbar links on hover */
+.navbar a:hover, .dropdown:hover .dropbtn {
+  background-color: rgb(5, 5, 5);
+}
+
+/* Dropdown content (hidden by default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+  float: none;
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+/* Add a grey background color to dropdown links on hover */
+.dropdown-content a:hover {
+  background-color: #ddd;
+}
+
+/* Show the dropdown menu on hover */
+.dropdown:hover .dropdown-content {
+  display: block;
 }
