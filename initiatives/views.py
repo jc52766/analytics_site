@@ -1,3 +1,4 @@
+from ssl import ALERT_DESCRIPTION_UNRECOGNIZED_NAME
 from django.shortcuts import render
 from . import helpers as hlp
 import pandas as pd
@@ -74,3 +75,23 @@ def retail_and_b2b_sales(request):
                   {'title': 'Retail & B2B Sales',
                    'subheading': 'Retail & B2B Sales page',
                   })
+
+def demand_as_cattle(request):
+    storage_client = hlp.connectStorage()
+    # get cost per kg data
+    df_demand_as_cattle = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/demand_as_cattle_summary.json').download_as_string(), lines=False).fillna(0).sort_values(by=["heads"], ascending=False).reset_index()
+    df_demand_as_cattle = df_demand_as_cattle.query("heads > 0")
+    #df_demand_as_cattle = df_demand_as_cattle[~df_demand_as_cattle["product_name_group"].str.contains('Trim')]
+    values_to_remove = ['trim','fat']
+    pattern = '|'.join(values_to_remove)
+    df_demand_as_cattle = df_demand_as_cattle.loc[~df_demand_as_cattle['product_name_group'].str.contains(pattern, case=False, regex=True)].reset_index()
+    
+    return render(request, 'initiatives/demand_as_cattle.html',
+                    {'title': 'Demand As Cattle',
+                    'subheading': 'Demand As Cattle page',
+                    'df_demand_as_cattle' : df_demand_as_cattle,
+                    'distinct_dates' : df_demand_as_cattle.fiscalWeekStartDate.sort_values().unique(),
+                    'max_date' : df_demand_as_cattle.fiscalWeekStartDate.max(),
+                    'min_date' : df_demand_as_cattle.fiscalWeekStartDate.min(),
+                    'distinct_categories' : df_demand_as_cattle.product_name_group.sort_values().unique(),
+                    })

@@ -1,0 +1,91 @@
+{% extends "initiatives/base.html" %}
+{% load static %}
+{% block headcontent %}
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+    google.charts.load('current', {packages: ['corechart', 'bar']});
+    google.charts.setOnLoadCallback(drawDemandAsCattle);
+
+    function gen_data(){
+        var data = new google.visualization.DataTable();
+                data.addColumn('string', 'fiscalWeekStartDate');
+                data.addColumn('string', 'product_name_group');
+                data.addColumn('number', 'heads');
+        {% for i,row in df_demand_as_cattle.iterrows %}
+                data.addRows( 1 );
+                data.setCell({{ i }}, 0, '{{ row.fiscalWeekStartDate }}' );
+                data.setCell({{ i }}, 1, '{{ row.product_name_group }}' );
+                data.setCell({{ i }}, 2, {{ row.heads }} );
+        {% endfor %}
+        return data;
+    }
+
+    function demand_as_cattle_as_DataTable(xdate){
+        if (xdate == null){var xdate = "{{min_date}}";}
+        var data = gen_data();
+        console.log(data);
+        // remove rows with invalid dates
+        rows2remove = []
+        for (var i = 0; i < data.getNumberOfRows(); i++) {
+            if (data.getValue(i,0) != xdate){
+                rows2remove.push(i);
+            }
+        }
+        // must offset though e.g. if we are to remove rows 2 and 5
+        // well if we 1st remove row 2 then row 5 is now in position 4
+        var xoffset = 0;
+        for (var i = 0; i < rows2remove.length; i++) {
+            data.removeRow(rows2remove[i]+xoffset);
+            var xoffset = xoffset-1;
+        }
+        return data;
+    }
+
+    function drawDemandAsCattle(xdate) {
+        var data = demand_as_cattle_as_DataTable(xdate);
+        // remove the date column (not required for plot)
+        data.removeColumn(0);
+        console.log(data);
+        
+        var options = {
+            title: 'Demand as Cattle',
+            chartArea: {width: '60%'},
+            hAxis: {
+              title: 'Heads',
+              minValue: 0
+            },
+            vAxis: {
+              title: 'Primal'
+            }
+          };
+
+        var table = new google.visualization.BarChart(document.getElementById('demand_as_cattle_plot'));
+        table.draw(data, options);
+
+    }
+
+    </script>
+{% endblock headcontent %}
+
+{% block content %}
+    <label for="date">Choose a date:</label>
+    <select name="date" id="date_dropdown" onchange="drawDemandAsCattle(this.value);">
+        {% for d in distinct_dates %}
+            <option value='{{d}}'>{{d}}</option>
+        {% endfor %}
+      </select>
+
+
+      {% comment %} <fieldset>
+        <legend>Please select one of the following</legend>
+      <select name="date" id="date_dropdown" onchange="drawDemandAsCattle(this.value);">
+          {% for d in distinct_categories %}
+          <input type="radio" name="radio_category" id='{{d}}' value='{{d}}' /><label for='{{d}}'>{{d}}</label><br />
+          {% endfor %}
+        </fieldset> {% endcomment %}
+
+
+    <div id="demand_as_cattle_plot" style="height: 700px;"></div>
+
+{% endblock content %}
