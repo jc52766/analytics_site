@@ -99,3 +99,13 @@ def demand_as_cattle(request):
                     'min_date' : df_demand_as_cattle.fiscalWeekStartDate.min(),
                     'distinct_categories' : df_demand_as_cattle.product_name_group.sort_values().unique(),
                     })
+
+def yield_trees(request):
+    storage_client = hlp.connectStorage()
+    # get cost per kg data
+    df_yield_tree = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/yield_tree.json').download_as_string(), lines=False)
+    
+    return render(request, 'initiatives/yield_trees.html',
+                    {'title': 'Yield Trees',
+                    'json_yield_tree' : df_yield_tree.to_json(orient='split'),
+                    })
