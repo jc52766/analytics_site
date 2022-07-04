@@ -5,9 +5,10 @@
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
     google.charts.load('current', {packages: ['corechart', 'bar']});
-    google.charts.setOnLoadCallback(drawDemandAsCattle);
+    google.charts.setOnLoadCallback(drawDemandAsCattle_bar);
+    google.charts.setOnLoadCallback(drawLineChart);
 
-    function gen_data(){
+    function gen_data_bar(){
         var data = new google.visualization.DataTable();
                 data.addColumn('string', 'fiscalWeekStartDate');
                 data.addColumn('string', 'product_name_group');
@@ -21,9 +22,9 @@
         return data;
     }
 
-    function demand_as_cattle_as_DataTable(xdate){
+    function demand_as_cattle_bar_as_DataTable(xdate){
         if (xdate == null){var xdate = "{{min_date}}";}
-        var data = gen_data();
+        var data = gen_data_bar();
         console.log(data);
         // remove rows with invalid dates
         rows2remove = []
@@ -42,8 +43,8 @@
         return data;
     }
 
-    function drawDemandAsCattle(xdate) {
-        var data = demand_as_cattle_as_DataTable(xdate);
+    function drawDemandAsCattle_bar(xdate) {
+        var data = demand_as_cattle_bar_as_DataTable(xdate);
         // remove the date column (not required for plot)
         data.removeColumn(0);
         console.log(data);
@@ -51,7 +52,7 @@
         var options = {
             title: 'Demand as Cattle',
             legend: { position: "none" },
-            chartArea: {width: '60%'},
+            chartArea: {width: '80%'},
             hAxis: {
               title: 'Heads',
               minValue: 0
@@ -61,17 +62,55 @@
             }
           };
 
-        var table = new google.visualization.BarChart(document.getElementById('demand_as_cattle_plot'));
-        table.draw(data, options);
+        var barPlot = new google.visualization.BarChart(document.getElementById('demand_as_cattle_plot'));
+        barPlot.draw(data, options);
 
     }
+
+    function drawLineChart(jsonString="{{ json_demand_as_cattle_wide|escapejs }}"){
+        console.log(jsonString);
+        var array  = JSON.parse(jsonString);
+        // google.visualization.arrayToDataTable expect 1st array to be column names then data so do that here
+        array2 = [array.columns].concat(array.data)
+        console.log(array2)
+        var data = google.visualization.arrayToDataTable(array2);
+        console.log("data done");
+
+        var options = {
+          title: 'Demand as Cattle per week',
+          curveType: 'function',
+          legend: { position: "none" },
+            chartArea: {width: '80%'},
+        };
+
+        var lineChart = new google.visualization.LineChart(document.getElementById('demand_as_cattle_plot_line'));
+        lineChart.draw(data, options);
+
+        google.visualization.events.addListener(lineChart, 'select', function(e) {
+            console.log("you selected...");
+            console.log("Column")
+            let cs = array2[0][lineChart.getSelection()[0]['column']]
+            console.log( cs )
+            console.log("Row")
+            var rs = array2[lineChart.getSelection()[0]['row']+1];
+            console.log( rs )
+            
+            // change date dropdown value to match that date selected in line plot
+            let selected_date = rs[0];
+            let element = document.getElementById('date_dropdown');
+            element.value = rs[0];
+            // now rerun bar plot for the date selected
+            drawDemandAsCattle_bar(selected_date);
+          });
+        
+      }
 
     </script>
 {% endblock headcontent %}
 
 {% block content %}
     <label for="date">Choose a date:</label>
-    <select name="date" id="date_dropdown" onchange="drawDemandAsCattle(this.value);">
+    <select name="date" id="date_dropdown" onchange="drawDemandAsCattle_bar(this.value);">
         {% for d in distinct_dates %}
             <option value='{{d}}'>{{d}}</option>
         {% endfor %}
@@ -86,7 +125,9 @@
           {% endfor %}
         </fieldset> {% endcomment %}
 
-
-    <div id="demand_as_cattle_plot" style="height: 700px;"></div>
+        <div style="width: 100%; overflow: hidden;">
+            <div id="demand_as_cattle_plot" style="height: 800px; width: 48%; float: left;"></div>
+            <div id="demand_as_cattle_plot_line" style="height: 800px; width: 48%; float: right;"></div>
+</div>
 
 {% endblock content %}
