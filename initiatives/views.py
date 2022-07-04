@@ -82,7 +82,7 @@ def demand_as_cattle(request):
     df_demand_as_cattle = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/demand_as_cattle_summary.json').download_as_string(), lines=False).fillna(0).sort_values(by=["heads"], ascending=False).reset_index()
     df_demand_as_cattle = df_demand_as_cattle.query("heads > 0")
     #df_demand_as_cattle = df_demand_as_cattle[~df_demand_as_cattle["product_name_group"].str.contains('Trim')]
-    values_to_remove = ['trim','fat','tomahawk','ribs prepared','bone']
+    values_to_remove = ['trim','fat','tomahawk','ribs prepared','bone','shank hq']
     pattern = '|'.join(values_to_remove)
     df_demand_as_cattle = df_demand_as_cattle.loc[~df_demand_as_cattle['product_name_group'].str.contains(pattern, case=False, regex=True)].reset_index()
     df_demand_as_cattle.heads = df_demand_as_cattle.heads.round()
