@@ -106,11 +106,11 @@
     function draw_DAC_bar() {
         var data_barPlot = gen_data_bar();
         var options_barPlot = {
-            title: 'Demand as Cattle',
+            title: 'Demand as Cattle by primal group',
             fontName: 'Roboto',
             fontSize: '12',
             legend: { position: "none" },
-            chartArea: {width: '60%', height: '85%'},
+            chartArea: {width: '50%', height: '85%'},
             hAxis: {
             title: 'Heads',
             minValue: 0,
@@ -131,13 +131,13 @@
             fontName: 'Roboto',
             fontSize: '12',
             legend: { position: "none" },
-            chartArea: {width: '60%', height: '85%'},
+            chartArea: {width: '50%', height: '85%'},
             hAxis: {
             title: 'Date',
-            minValue: 0,
             },
             vAxis: {
             title: 'Heads',
+            minValue: 0,
             }
         };
         var lineChart = new google.visualization.LineChart(document.getElementById('dac_plot_line'));
@@ -176,11 +176,11 @@
 </div>
 
 <div style="width: 100%; overflow: hidden">
-  <div id="dac_plot_bar" style="height: 500px; width: 70%; float: left"></div>
+  <div id="dac_plot_bar" style="height: 500px; width: 80%; float: left"></div>
 </div>
 <br></br>
 <div style="width: 100%; overflow: hidden">
-    <div id="dac_plot_line" style="height: 400px; width: 70%; float: left"></div>
+    <div id="dac_plot_line" style="height: 400px; width: 80%; float: left"></div>
 </div>
 
 {% endblock content %}
