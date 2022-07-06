@@ -81,23 +81,26 @@ def demand_as_cattle(request):
     # get cost per kg data
     df_demand_as_cattle = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/demand_as_cattle_summary.json').download_as_string(), lines=False).fillna(0).sort_values(by=["heads"], ascending=False).reset_index()
     df_demand_as_cattle = df_demand_as_cattle.query("heads > 0")
-    #df_demand_as_cattle = df_demand_as_cattle[~df_demand_as_cattle["product_name_group"].str.contains('Trim')]
-    values_to_remove = ['trim','fat','tomahawk','ribs prepared','bone','shank hq']
+    
+    values_to_remove = ['trim','fat'] #['trim','fat','tomahawk','ribs prepared','bone','shank hq']
     pattern = '|'.join(values_to_remove)
-    df_demand_as_cattle = df_demand_as_cattle.loc[~df_demand_as_cattle['product_name_group'].str.contains(pattern, case=False, regex=True)].reset_index()
+    df_demand_as_cattle = df_demand_as_cattle.loc[~df_demand_as_cattle['primal_group'].str.contains(pattern, case=False, regex=True)].reset_index()
+    
     df_demand_as_cattle.heads = df_demand_as_cattle.heads.round()
     
     # wide data for line chart
-    wide_dat = df_demand_as_cattle.pivot(index='fiscalWeekStartDate',columns='product_name_group',values='heads').reset_index().fillna(0)
+    #wide_dat = df_demand_as_cattle.pivot(index='fiscalWeekStartDate',columns='primal_group',values='heads').reset_index().fillna(0)
     
     return render(request, 'initiatives/demand_as_cattle.html',
                     {'title': 'Demand As Cattle',
                     'df_demand_as_cattle' : df_demand_as_cattle,
-                    'json_demand_as_cattle_wide' : wide_dat.to_json(orient='split'),
+                    'json_demand_as_cattle' : df_demand_as_cattle.drop(columns='index').to_json(orient='records'),
+                    #'json_demand_as_cattle_wide' : wide_dat.to_json(orient='split'),
                     'distinct_dates' : df_demand_as_cattle.fiscalWeekStartDate.sort_values().unique(),
                     'max_date' : df_demand_as_cattle.fiscalWeekStartDate.max(),
                     'min_date' : df_demand_as_cattle.fiscalWeekStartDate.min(),
-                    'distinct_categories' : df_demand_as_cattle.product_name_group.sort_values().unique(),
+                    'distinct_cattle_type' : df_demand_as_cattle.master_cattle_type.sort_values().unique(),
+                    'distinct_crm_site' : df_demand_as_cattle.crm_site.sort_values().unique(),
                     })
 
 def yield_trees(request):

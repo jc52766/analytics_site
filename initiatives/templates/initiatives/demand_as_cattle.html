@@ -1,122 +1,123 @@
 {% extends "initiatives/base.html" %} {% load static %} {% block headcontent %}
 
-<script
+<script 
   type="text/javascript"
   src="https://www.gstatic.com/charts/loader.js"
 ></script>
+<script src="https://cdn.jsdelivr.net/npm/danfojs@1.1.0/lib/bundle.min.js"></script>
+
 <script type="text/javascript">
   google.charts.load('current', {packages: ['corechart', 'bar']});
   google.charts.setOnLoadCallback(draw_DAC_bar);
-  google.charts.setOnLoadCallback(drawLineChart);
+  //google.charts.setOnLoadCallback(drawLineChart);
 
-  function gen_data_bar(){
-      var data = new google.visualization.DataTable();
-              data.addColumn('string', 'fiscalWeekStartDate');
-              data.addColumn('string', 'product_name_group');
-              data.addColumn('number', 'heads');
-      {% for i,row in df_demand_as_cattle.iterrows %}
-              data.addRows( 1 );
-              data.setCell({{ i }}, 0, '{{ row.fiscalWeekStartDate }}' );
-              data.setCell({{ i }}, 1, '{{ row.product_name_group }}' );
-              data.setCell({{ i }}, 2, {{ row.heads }} );
-      {% endfor %}
-      return data;
-  }
+    function get_data(jsonString="{{ json_demand_as_cattle|escapejs }}"){
+        let json_data = JSON.parse(jsonString);
+        // now convert data into different formats
+        // df
+        var data_danfo_df = new dfd.DataFrame(json_data);
+        // array of arrays, which google viz needs, where 1st array is column names.
+        //let temp_json = dfd.toJSON(data_danfo_df)
+        //var data_arrays = [Object.keys(temp_json[0])].concat( temp_json.map((x) => Object.values(x)) );
+        let data_arrays = convert_danfoDF_2_array_of_arrays(data_danfo_df)
+        return {'danfo_df':data_danfo_df, 'arrays':data_arrays}
+    }
 
-  function dac_bar_as_DataTable(xdate){
-      if (xdate == null){var xdate = "{{min_date}}";}
-      var data = gen_data_bar();
-      console.log(data);
-      // remove rows with invalid dates
-      rows2remove = []
-      for (var i = 0; i < data.getNumberOfRows(); i++) {
-          if (data.getValue(i,0) != xdate){
-              rows2remove.push(i);
-          }
-      }
-      // must offset though e.g. if we are to remove rows 2 and 5
-      // well if we 1st remove row 2 then row 5 is now in position 4
-      var xoffset = 0;
-      for (var i = 0; i < rows2remove.length; i++) {
-          data.removeRow(rows2remove[i]+xoffset);
-          var xoffset = xoffset-1;
-      }
-      return data;
-  }
+    function convert_danfoDF_2_array_of_arrays(df){
+        let temp_json = dfd.toJSON(df)
+        var data_arrays = [Object.keys(temp_json[0])].concat( temp_json.map((x) => Object.values(x)) );
+        return data_arrays;
+    }
 
-  function draw_DAC_bar(xdate) {
-      var data_barPlot = dac_bar_as_DataTable(xdate);
-      // remove the date column (not required for plot)
-      data_barPlot.removeColumn(0);
+    function filter_data(){
+        xdate = document.getElementById('date_dropdown').value;
+        xcrm_site = document.getElementById('crm_site_dropdown').value;
+        xcattle_type = document.getElementById('cattle_type_dropdown').value;
+        if (xdate == null){var xdate = 'All';}
+        if (xcrm_site == null){var xcrm_site = 'All';}
+        if (xcattle_type == null){var xcattle_type = 'All';}
+        // remove rows with invalid dates or crm site
+        let df = get_data()['danfo_df'];
+        /*let df2 = df.iloc({
+        rows: df["fiscalWeekStartDate"].eq(xdate).
+        and(df["crm_site"].eq(xcrm_site)).
+        and(df["master_cattle_type"].eq(xcattle_type))
+        });*/
+        let df2 = df;
+        if (xdate != 'All'){
+            df2 = df2.iloc({rows: df2["fiscalWeekStartDate"].eq(xdate)}).resetIndex();
+            
+        }
+        if (xcrm_site != 'All'){
+            df2 = df2.iloc({rows: df2["crm_site"].eq(xcrm_site)}).resetIndex();
+        }
+        if (xcattle_type != 'All'){
+            df2 = df2.iloc({rows: df2["master_cattle_type"].eq(xcattle_type)}).resetIndex();
+        }
+        return df2;
+    }
 
-      var options_barPlot = {
-          title: 'Demand as Cattle',
-          legend: { position: "none" },
-          chartArea: {width: '70%'},
-          hAxis: {
+    function gen_data_bar(){
+        let data = filter_data().loc({columns: ['primal_group', 'heads']});
+        console.log(data);
+        // aggregate data as primal_group, sum(heads)
+        data = data.groupby(['primal_group']).col(['heads']).sum().rename({'heads_sum':'heads'}).sortValues('heads', {ascending:false})
+        // convert to google viz datatable
+        let array_of_arrays = convert_danfoDF_2_array_of_arrays(data);
+        var gv_data = new google.visualization.arrayToDataTable( array_of_arrays );
+        return gv_data;
+    }
+
+    function draw_DAC_bar() {
+        var data_barPlot = gen_data_bar();
+        var options_barPlot = {
+            title: 'Demand as Cattle',
+            legend: { position: "none" },
+            chartArea: {width: '70%'},
+            hAxis: {
             title: 'Heads',
             minValue: 0
-          },
-          vAxis: {
+            },
+            vAxis: {
             title: 'Primal'
-          }
+            }
         };
-
-      var barPlot = new google.visualization.BarChart(document.getElementById('dac_plot_bar'));
-      barPlot.draw(data_barPlot, options_barPlot);
-  }
-
-  function json_2_col1st_arrays(jsonString){
-      // google.visualization.arrayToDataTable expect 1st array to be column names then data so do that here
-      let array  = JSON.parse(jsonString);
-      array2 = [array.columns].concat(array.data)
-      return array2
-  }
-
-  function drawLineChart(jsonString="{{ json_demand_as_cattle_wide|escapejs }}"){
-      var array_linePlot = json_2_col1st_arrays(jsonString);
-      var data_linePlot = google.visualization.arrayToDataTable(array_linePlot);
-
-      var options_line = {
-        title: 'Demand as Cattle per week',
-        curveType: 'function',
-        legend: { position: "none" },
-          chartArea: {width: '80%'},
-      };
-
-      var lineChart = new google.visualization.LineChart(document.getElementById('dac_plot_line'));
-      lineChart.draw(data_linePlot, options_line);
-
-      google.visualization.events.addListener(lineChart, 'select', function(e) {
-          console.log("you selected...");
-          console.log("Column")
-          let cs = array_linePlot[0][lineChart.getSelection()[0]['column']]
-          console.log( cs )
-          console.log("Row")
-          var rs = array_linePlot[lineChart.getSelection()[0]['row']+1];
-          console.log( rs )
-
-          // change date dropdown value to match that date selected in line plot
-          let selected_date = rs[0];
-          let element = document.getElementById('date_dropdown');
-          element.value = rs[0];
-          // now rerun bar plot for the date selected
-          draw_DAC_bar(selected_date);
-        });
-
+        var barPlot = new google.visualization.BarChart(document.getElementById('dac_plot_bar'));
+        barPlot.draw(data_barPlot, options_barPlot);
     }
+
 </script>
-{% endblock headcontent %} {% block content %}
-<label for="date">Choose a date:</label>
-<select name="date" id="date_dropdown" onchange="draw_DAC_bar(this.value);">
-  {% for d in distinct_dates %}
-  <option value="{{d}}">{{d}}</option>
-  {% endfor %}
-</select>
+{% endblock headcontent %} 
+{% block content %}
+
+<div>
+    <label for="date">Choose a date:</label>
+    <select name="date" id="date_dropdown" onchange="draw_DAC_bar();">
+        <option value="All">All</option>
+    {% for d in distinct_dates %}
+        <option value="{{d}}">{{d}}</option>
+    {% endfor %}
+    </select>
+
+    <label for="crm_site">Choose a site:</label>
+    <select name="crm_site" id="crm_site_dropdown" onchange="draw_DAC_bar();">
+        <option value="All">All</option>
+    {% for s in distinct_crm_site %}
+        <option value="{{s}}">{{s}}</option>
+    {% endfor %}
+    </select>
+
+    <label for="cattle_type">Choose a Cattle Type:</label>
+    <select name="cattle_type" id="cattle_type_dropdown" onchange="draw_DAC_bar();">
+        <option value="All">All</option>
+    {% for ct in distinct_cattle_type %}
+        <option value="{{ct}}">{{ct}}</option>
+    {% endfor %}
+    </select>
+</div>
 
 <div style="width: 100%; overflow: hidden">
-  <div id="dac_plot_bar" style="height: 650px; width: 48%; float: left"></div>
-  <div id="dac_plot_line" style="height: 650px; width: 48%; float: right"></div>
+  <div id="dac_plot_bar" style="height: 700px; width: 70%; float: left"></div>
 </div>
 
 {% endblock content %}
