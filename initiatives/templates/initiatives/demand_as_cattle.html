@@ -71,15 +71,17 @@
     function draw_DAC_bar() {
         var data_barPlot = gen_data_bar();
         var options_barPlot = {
-            title: 'Demand as Cattle',
+            title: null, //'Demand as Cattle',
+            fontName: 'Roboto',
+            fontSize: '12',
             legend: { position: "none" },
-            chartArea: {width: '70%'},
+            chartArea: {width: '60%', height: '75%'},
             hAxis: {
             title: 'Heads',
-            minValue: 0
+            minValue: 0,
             },
             vAxis: {
-            title: 'Primal'
+            title: 'Primal',
             }
         };
         var barPlot = new google.visualization.BarChart(document.getElementById('dac_plot_bar'));
@@ -91,7 +93,7 @@
 {% block content %}
 
 <div>
-    <label for="date">Choose a date:</label>
+    <label for="date">Date:</label>
     <select name="date" id="date_dropdown" onchange="draw_DAC_bar();">
         <option value="All">All</option>
     {% for d in distinct_dates %}
@@ -99,7 +101,7 @@
     {% endfor %}
     </select>
 
-    <label for="crm_site">Choose a site:</label>
+    <label for="crm_site">Site:</label>
     <select name="crm_site" id="crm_site_dropdown" onchange="draw_DAC_bar();">
         <option value="All">All</option>
     {% for s in distinct_crm_site %}
@@ -107,7 +109,7 @@
     {% endfor %}
     </select>
 
-    <label for="cattle_type">Choose a Cattle Type:</label>
+    <label for="cattle_type">Cattle Type:</label>
     <select name="cattle_type" id="cattle_type_dropdown" onchange="draw_DAC_bar();">
         <option value="All">All</option>
     {% for ct in distinct_cattle_type %}
@@ -117,7 +119,7 @@
 </div>
 
 <div style="width: 100%; overflow: hidden">
-  <div id="dac_plot_bar" style="height: 700px; width: 70%; float: left"></div>
+  <div id="dac_plot_bar" style="height: 600px; width: 100%; float: left"></div>
 </div>
 
 {% endblock content %}
