@@ -4,9 +4,38 @@
   type="text/javascript"
   src="https://www.gstatic.com/charts/loader.js"
 ></script>
+<script src="https://cdn.jsdelivr.net/npm/danfojs@1.1.0/lib/bundle.min.js"></script>
 <script type="text/javascript">
   google.charts.load('current', {packages:["orgchart"]});
   google.charts.setOnLoadCallback(draw_yield_tree);
+
+  // bq query to get yield tree data:
+  {
+    CREATE TEMP FUNCTION parent(x string)
+    RETURNS string
+    LANGUAGE js AS r"""
+      return x.split("->").slice(0,-1).join('->').trim();
+    """;
+    # e.g. parent('a -> b -> c -> d') => 'a -> b -> c'
+
+    with dat as (
+      SELECT distinct tree_string as child, 
+    parent(tree_string) as parent, 
+    tree_string as tooltip, 
+    concat("Product: ",last_Product,', ',last_ProductDescription, ', Yield:', 
+    (case 
+    when final_yield > 1 or final_yield < 0 then '?' 
+    else cast(round(final_yield*100,2) as string)
+    end)
+    ,'%') as formatted_child
+    FROM `gcp-wow-pvc-grnstck-prod.analytics.yield_trees_reshaped` 
+    where YieldTreeName = 'Quintiq- Teys Tamworth'
+    and final_yield>0
+    )
+    select *
+    FROM dat
+    ;
+  }
 
   function json_2_col1st_arrays(jsonString){
       // google.visualization.arrayToDataTable expect 1st array to be column names then data so do that here
@@ -16,8 +45,27 @@
   }
 
   function draw_yield_tree(jsonString="{{ json_yield_tree|escapejs }}"){
-      let array  = JSON.parse(jsonString);
-      var data_yield_tree = google.visualization.arrayToDataTable(array.data);
+      var array_yt  = JSON.parse(jsonString);
+      console.log(array_yt.data);
+      // structure is:
+      //{
+      //"child",
+      // "parent",
+      // "tooltip",
+      // "formatted_child"
+      //}
+      //We want this structure:
+      //{
+      //{'v':"child", 'f':"formatted_child"},
+      //"parent",
+      //"tooltip"
+      //}
+      var ll = []
+      for(let i = 0; i < array_yt.data.length; i++){
+        ll.push([{'v':array_yt.data[i][0],'f':array_yt.data[i][3]},array_yt.data[i][1], array_yt.data[i][2]])
+      }      
+      //var data_yield_tree = google.visualization.arrayToDataTable(array_yt.data);
+      var data_yield_tree = google.visualization.arrayToDataTable(ll);
 
       var options_yt = {
         title: 'Yield Tree',
@@ -33,6 +81,8 @@
 </script>
 {% endblock headcontent %} {% block content %}
 
+<h2 style="color: Red;">Under Construction. Not yet ready.</h2>
 <div id="yield_tree_plot"></div>
+
 
 {% endblock content %}
