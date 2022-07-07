@@ -10,6 +10,10 @@
   google.charts.setOnLoadCallback(draw_DAC_bar);
   google.charts.setOnLoadCallback(draw_DAC_line);
 
+  // only get data once . To avoid calling get_data and get_data_wide etc functions again and again
+    var all_data = get_data()
+    var all_data_wide = get_data_wide()
+
     function get_data(jsonString="{{ json_demand_as_cattle|escapejs }}"){
         let json_data = JSON.parse(jsonString);
         // now convert data into different formats
@@ -48,7 +52,7 @@
         if (xcrm_site == null){var xcrm_site = 'All';}
         if (xcattle_type == null){var xcattle_type = 'All';}
         // remove rows with invalid dates or crm site
-        let df = get_data()['danfo_df'];
+        let df = all_data['danfo_df'];
         let df2 = df;
         if (xdate != 'All'){
             df2 = df2.iloc({rows: df2["fiscalWeekStartDate"].eq(xdate)}).resetIndex();
@@ -69,7 +73,7 @@
         if (xcrm_site == null){var xcrm_site = 'All';}
         if (xcattle_type == null){var xcattle_type = 'All';}
         // remove rows with invalid dates or crm site
-        let df = get_data_wide()['danfo_df'];
+        let df = all_data_wide['danfo_df'];
         let df2 = df;
         if (xcrm_site != 'All'){
             df2 = df2.iloc({rows: df2["crm_site"].eq(xcrm_site)}).resetIndex();
@@ -170,7 +174,7 @@
 <div>
 
     <label for="date">Date:</label>
-    <select name="date" id="date_dropdown" onchange="draw_DAC_bar();draw_DAC_line();">
+    <select name="date" id="date_dropdown" onchange="draw_DAC_bar();">
         <option value="All">All</option>
     {% for d in distinct_dates %}
         <option value="{{d}}">{{d}}</option>
