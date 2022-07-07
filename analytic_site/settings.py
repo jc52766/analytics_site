@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-pl+cno&xtfeqe5i)j982tva8&tn&nx*))_gkc^(!d4y2+i#sq-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1',
+                 'gssite-dot-gcp-wow-pvc-grnstck-prod.uc.r.appspot.com']
 
 
 # Application definition
@@ -117,6 +118,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = 'static/'
+#STATIC_URL = 'https://storage.googleapis.com/gs_website/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

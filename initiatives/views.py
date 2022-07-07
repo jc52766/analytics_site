@@ -38,14 +38,14 @@ def primary_processing(request):
     storage_client = hlp.connectStorage()
 
     # get cost per kg data
-    df_cost_per_kg = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/cost_per_kg.json').download_as_string(), lines=True) 
+    df_cost_per_kg = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/cost_per_kg.json').download_as_bytes().decode(), lines=True) 
     
     # add formatted columns for display purposes
     for col in ['Tamworth', 'Naracoorte', 'Total_East_Coast', 'ACC', 'VV_Walsh', 'Total_West_Coast']:
         df_cost_per_kg[col+'_formatted'] = list(map(lambda x: "${:,.2f}".format(x), df_cost_per_kg[col]))
     
     # get cost per kg data
-    df_heads = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/heads.json').download_as_string(), lines=True) 
+    df_heads = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/heads.json').download_as_bytes().decode(), lines=True) 
     
     # add formatted columns for display purposes
     for col in ['Tamworth', 'Naracoorte', 'Total_East_Coast', 'ACC', 'VV_Walsh', 'Total_West_Coast']:
@@ -79,7 +79,7 @@ def retail_and_b2b_sales(request):
 def demand_as_cattle(request):
     storage_client = hlp.connectStorage()
     # get cost per kg data
-    df_demand_as_cattle = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/demand_as_cattle_summary.json').download_as_string(), lines=False).fillna(0).sort_values(by=["heads"], ascending=False).reset_index()
+    df_demand_as_cattle = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/demand_as_cattle_summary.json').download_as_bytes().decode(), lines=False).fillna(0).sort_values(by=["heads"], ascending=False).reset_index()
     df_demand_as_cattle = df_demand_as_cattle.query("heads > 0")
     
     values_to_remove = ['trim','fat'] #['trim','fat','tomahawk','ribs prepared','bone','shank hq']
@@ -107,7 +107,7 @@ def demand_as_cattle(request):
 def yield_trees(request):
     storage_client = hlp.connectStorage()
     # get cost per kg data
-    df_yield_tree = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/yield_tree.json').download_as_string(), lines=False)
+    df_yield_tree = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/yield_tree.json').download_as_bytes().decode(), lines=False)
     
     return render(request, 'initiatives/yield_trees.html',
                     {'title': 'Yield Trees',
