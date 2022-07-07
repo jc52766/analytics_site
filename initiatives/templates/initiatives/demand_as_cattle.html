@@ -99,7 +99,6 @@
         // aggregate data as primal_group, sum(heads)
         data = data.groupby(['fiscalWeekStartDate']).sum().sortValues('fiscalWeekStartDate', {ascending:true})
         // doing above sum adds _sum to end of column names so rename them
-        console.log(data);
         rnc = {}
         for (let i = 0; i < data.columns.length; i++){
             cnc = data.columns[i];
