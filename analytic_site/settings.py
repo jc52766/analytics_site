@@ -120,6 +120,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 #STATIC_URL = 'https://storage.googleapis.com/gs_website/static/'
 
+STATIC_ROOT = 'static_all/'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
