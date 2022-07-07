@@ -92,10 +92,18 @@
 
     function gen_data_line(){
         let data = filter_data_wide().drop({columns: ['master_cattle_type', 'crm_site']});
-        console.log(data.head(5));
         // aggregate data as primal_group, sum(heads)
         data = data.groupby(['fiscalWeekStartDate']).sum().sortValues('fiscalWeekStartDate', {ascending:true})
+        // doing above sum adds _sum to end of column names so rename them
         console.log(data);
+        rnc = {}
+        for (let i = 0; i < data.columns.length; i++){
+            cnc = data.columns[i];
+            if (cnc.includes('_sum')){
+                rnc[cnc] = cnc.replace('_sum','');
+            }
+        }
+        data.rename(rnc, { inplace: true })
         // convert to google viz datatable
         let array_of_arrays = convert_danfoDF_2_array_of_arrays(data);
         var gv_data = new google.visualization.arrayToDataTable( array_of_arrays );
