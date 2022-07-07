@@ -93,7 +93,7 @@ def demand_as_cattle(request):
     wide_dat = df_demand_as_cattle.pivot(index=['fiscalWeekStartDate','master_cattle_type','crm_site'],columns='primal_group',values='heads').reset_index().fillna(0)
     
     return render(request, 'initiatives/demand_as_cattle.html',
-                    {'title': 'Demand As Cattle',
+                    {#'title': 'Demand As Cattle',
                     'df_demand_as_cattle' : df_demand_as_cattle,
                     'json_demand_as_cattle' : df_demand_as_cattle.drop(columns='index').to_json(orient='records'),
                     'json_demand_as_cattle_wide' : wide_dat.to_json(orient='records'),

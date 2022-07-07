@@ -138,10 +138,22 @@
             vAxis: {
             title: 'Heads',
             minValue: 0,
+            viewWindow:{
+                min:0,
+              }
             }
         };
         var lineChart = new google.visualization.LineChart(document.getElementById('dac_plot_line'));
         lineChart.draw(data_linePlot, options_linePlot);
+
+        google.visualization.events.addListener(lineChart, 'select', function(e) {
+            var selectedItem = lineChart.getSelection()[0];
+            var selected_date = data_linePlot.getValue(selectedItem.row, 0);
+            let element = document.getElementById('date_dropdown');
+            element.value = selected_date;
+            // need to trigger the change handler with code
+            $('#date_dropdown').change();
+          });
     }
 
 </script>
@@ -176,11 +188,11 @@
 </div>
 
 <div style="width: 100%; overflow: hidden">
-  <div id="dac_plot_bar" style="height: 500px; width: 80%; float: left"></div>
+  <div id="dac_plot_bar" style="height: 400px; width: 90%; float: left"></div>
 </div>
 <br></br>
 <div style="width: 100%; overflow: hidden">
-    <div id="dac_plot_line" style="height: 400px; width: 80%; float: left"></div>
+    <div id="dac_plot_line" style="height: 300px; width: 90%; float: left"></div>
 </div>
 
 {% endblock content %}
