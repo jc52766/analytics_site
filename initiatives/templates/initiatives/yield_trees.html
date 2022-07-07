@@ -11,7 +11,7 @@
 
   // bq query to get yield tree data:
   {
-    CREATE TEMP FUNCTION parent(x string)
+    /*CREATE TEMP FUNCTION parent(x string)
     RETURNS string
     LANGUAGE js AS r"""
       return x.split("->").slice(0,-1).join('->').trim();
@@ -34,7 +34,7 @@
     )
     select *
     FROM dat
-    ;
+    ;*/
   }
 
   function json_2_col1st_arrays(jsonString){
@@ -72,6 +72,7 @@
         curveType: 'function',
         legend: { position: "none" },
           chartArea: {width: '100%'},
+          allowCollapse: true,
       };
 
       var orgChart = new google.visualization.OrgChart(document.getElementById('yield_tree_plot'));
