@@ -61,11 +61,9 @@
       var ll = []
       for(let i = 0; i < array_yt.data.length; i++){
         //ll.push([{'v':array_yt.data[i][0],'f':array_yt.data[i][3]},array_yt.data[i][1], array_yt.data[i][2]])
-        console.log(array_yt.data[i][0]);
         var cDepth = (array_yt.data[i][0]).split("->").length-1;
         if(cDepth <= xmaxDepth){
           ll.push(array_yt.data[i]);
-          console.log(ll);
         }
       }
       return ll;
@@ -78,7 +76,6 @@
 
   function draw_yield_tree(jsonString="{{ json_yield_tree|escapejs }}"){
       var array_yt  = JSON.parse(jsonString);
-      //console.log(array_yt.data);
       // structure is:
       //{
       //"child",
