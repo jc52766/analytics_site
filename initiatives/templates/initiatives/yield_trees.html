@@ -35,7 +35,10 @@
     and final_yield>0
 
     )
-    select child, parent, tooltip, formatted_child
+    select child, 
+    (case when parent = '' then 'carcass' else parent end) as parent,
+    tooltip, 
+    formatted_child
     FROM dat
     order by parent, final_yield desc, tree_string
     ;
