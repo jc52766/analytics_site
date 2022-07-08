@@ -11,7 +11,8 @@
 
   // bq query to get yield tree data:
   {
-    /*CREATE TEMP FUNCTION parent(x string)
+    /*
+    CREATE TEMP FUNCTION parent(x string)
     RETURNS string
     LANGUAGE js AS r"""
       return x.split("->").slice(0,-1).join('->').trim();
@@ -27,14 +28,18 @@
     when final_yield > 1 or final_yield < 0 then '?' 
     else cast(round(final_yield*100,2) as string)
     end)
-    ,'%') as formatted_child
+    ,'%') as formatted_child,
+    final_yield
     FROM `gcp-wow-pvc-grnstck-prod.analytics.yield_trees_reshaped` 
-    where YieldTreeName = 'Quintiq- Teys Tamworth'
+    where YieldTreeName = 'Quintiq - Teys Naracoorte Grass Fed'
     and final_yield>0
+
     )
-    select *
+    select child, parent, tooltip, formatted_child
     FROM dat
-    ;*/
+    order by parent, final_yield desc
+    ;
+  */
   }
 
   function json_2_col1st_arrays(jsonString){
