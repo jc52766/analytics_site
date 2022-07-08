@@ -10,6 +10,12 @@ def home(request):
                    'subheading': 'Your one stop shop for GS Project Monitoring.',
                   })
 
+def news(request):
+    return render(request, 'initiatives/news.html',
+                  {'title': 'News',
+                   #'subheading': 'Your one stop shop for GS Project Monitoring.',
+                  })
+
 def channel_strategy(request):
     return render(request, 'initiatives/channel_strategy.html',
                   {'title': 'Channel Strategy',
