@@ -52,9 +52,33 @@
       return array2
   }
 
+  function filter_data(array_yt){
+    xmaxDepth = document.getElementById('max_depth_dropdown').value;
+    if (xmaxDepth == null){var xmaxDepth = '2';}
+    // If not inf then remove children that are too deep
+    // -> is found as -\u003e in the json
+    if (xmaxDepth != 'Inf'){
+      var ll = []
+      for(let i = 0; i < array_yt.data.length; i++){
+        //ll.push([{'v':array_yt.data[i][0],'f':array_yt.data[i][3]},array_yt.data[i][1], array_yt.data[i][2]])
+        console.log(array_yt.data[i][0]);
+        var cDepth = (array_yt.data[i][0]).split("->").length-1;
+        if(cDepth <= xmaxDepth){
+          ll.push(array_yt.data[i]);
+          console.log(ll);
+        }
+      }
+      return ll;
+    }
+    else {
+      return array_yt.data;
+    }
+    
+}
+
   function draw_yield_tree(jsonString="{{ json_yield_tree|escapejs }}"){
       var array_yt  = JSON.parse(jsonString);
-      console.log(array_yt.data);
+      //console.log(array_yt.data);
       // structure is:
       //{
       //"child",
@@ -68,10 +92,11 @@
       //"parent",
       //"tooltip"
       //}
+      array_yt.data = filter_data(array_yt);
       var ll = []
       for(let i = 0; i < array_yt.data.length; i++){
-        ll.push([{'v':array_yt.data[i][0],'f':array_yt.data[i][3]},array_yt.data[i][1], array_yt.data[i][2]])
-      }      
+        ll.push([{'v':array_yt.data[i][0],'f':array_yt.data[i][3]},array_yt.data[i][1], array_yt.data[i][2]]);
+      }
       //var data_yield_tree = google.visualization.arrayToDataTable(array_yt.data);
       var data_yield_tree = google.visualization.arrayToDataTable(ll);
 
@@ -93,6 +118,19 @@
 {% endblock headcontent %} {% block content %}
 
 <h2 style="color: Red;">Under Construction. Not yet ready.</h2>
+
+<div>
+
+  <label for="max_depth">max depth:</label>
+  <select name="max_depth" id="max_depth_dropdown" onchange="draw_yield_tree();">
+    <option value="Inf">Inf</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+  </select>
+
+</div>
+
 <div id="yield_tree_plot"></div>
 
 
