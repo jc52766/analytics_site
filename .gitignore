@@ -1,3 +1,4 @@
 *.pyc
 .env*
 static_all/
+settings.json

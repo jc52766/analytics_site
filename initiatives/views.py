@@ -100,7 +100,7 @@ def demand_as_cattle(request):
     
     return render(request, 'initiatives/demand_as_cattle.html',
                     {#'title': 'Demand As Cattle',
-                    'df_demand_as_cattle' : df_demand_as_cattle,
+                    #'df_demand_as_cattle' : df_demand_as_cattle,
                     'json_demand_as_cattle' : df_demand_as_cattle.drop(columns='index').to_json(orient='records'),
                     'json_demand_as_cattle_wide' : wide_dat.to_json(orient='records'),
                     'distinct_dates' : df_demand_as_cattle.fiscalWeekStartDate.sort_values().unique(),
