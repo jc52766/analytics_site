@@ -1,0 +1,539 @@
+##
+## DECLARE vars
+DECLARE yt_pdt string; # the proejct.dataset.table name of the yield tree e.g. "`gcp-wow-ent-im-tbl-prod.adp_dm_greenstock_view.foodsconnected_yieldtree_v`"
+DECLARE yt_where string DEFAULT ''; # this is the where clause (if any) to be using when querying yield tree table yt_pdt
+DECLARE max_depth int64 DEFAULT 7; # defines the max depth of tree e.g. if 10 then will go 10 levels below the carcass primals level of yield tree. if this is set to 7 then goes to depth 7, or widened to L7.
+DECLARE i int64 DEFAULT 0; # a generic integer for looping
+DECLARE temp_str0 string; # just a string var that is not locked in
+DECLARE temp_str1 string; # just a string var that is not locked in
+DECLARE temp_str2 string; # just a string var that is not locked in
+DECLARE str_tree_string string; # this is the string to hold the tree traverse sql code
+DECLARE str_yield_multiple string; # this is the string to hold the multiply all yields to get to single yield sql code
+DECLARE str_yield_multiplier string; # this is what we multiply yield (str_yield_multiple) by in instances e.g. weight break where we must further multiply yields.
+DECLARE sql_last_Product STRING; # from our tree traversal this will store the final product
+DECLARE sql_last_ProductDescription STRING; # from our tree traversal this will store the final product description
+DECLARE final_sql0 string; # incremental final sql to get to the very final table of data
+DECLARE final_sql1 string; # incremental final sql to get to the very final table of data
+DECLARE final_sql2 string; # incremental final sql to get to the very final table of data
+
+##
+## SET vars
+set yt_where = """
+--where 
+-- (
+--         (trim(YieldTreeName) = 'Quintiq- Teys Tamworth') or
+--       (trim(YieldTreeName) = 'Quintiq - Australian Country Choice') or
+--       (trim(YieldTreeName) = 'Quintiq - Teys Tamworth Grass Fed') or
+--       (trim(YieldTreeName) = 'Current V & V Walsh Quintiq') or
+--       (trim(YieldTreeName) = 'Quintiq - Teys Naracoorte Grass Fed') or
+--       (trim(YieldTreeName) = 'Quintiq - JBS Longford') or
+--       (trim(YieldTreeName) = '100 Day GF')
+--       ) and
+--      lower(Site) like '%woolworth%'
+      """;
+
+set yt_pdt = "`gcp-wow-ent-im-tbl-prod.adp_dm_greenstock_view.foodsconnected_yieldtree_v`";
+
+##
+## For each yield tree get the max version
+EXECUTE IMMEDIATE """
+  create or replace temp table yt_max_version as (
+  select trim(YieldTreeName) as YieldTreeName, max(Version) as max_version
+  FROM 
+  """
+  || yt_pdt
+  ||yt_where ||
+  """
+  group by trim(YieldTreeName)
+  );
+  """;
+
+-- ##
+-- ## In case PrimaryCutOrder doesn't start at 1...
+-- ## For each yield tree, version get the min PrimaryCutOrder where PrimaryCutYield > 0
+-- EXECUTE IMMEDIATE """
+--   create or replace temp table yt_v_min_primaryCutOrder as (
+--   select a.YieldTreeName, a.Version, min(a.PrimaryCutOrder) as min_PrimaryCutOrder
+--   FROM 
+--   ( select * from
+--   """
+--   || yt_pdt ||
+--   """
+--   where PrimaryCutYield > 0 ) a
+--   inner join
+--   yt_max_version b
+--   on (a.YieldTreeName=b.YieldTreeName) and (a.Version=b.max_version)
+--   group by a.YieldTreeName, a.Version
+--   );
+--   """;
+
+##
+## Get distinct primary, secondary and primary, offcuts products for 
+## PrimaryCutOrder == min_PrimaryCutOrder for YieldTreeName, Version
+## This is basically the carcass level stuff. And important for calcing yields as at this level we'd need to factor in PrimaryCutYield for yield calculations
+EXECUTE IMMEDIATE """
+create or replace temp table yt_carcass_data as (
+    with dat as (
+      select a.*
+      from 
+      (select * from 
+      """
+      || yt_pdt ||
+      """
+       where PrimaryCutYield > 0
+       ) a
+       inner join yt_max_version b
+        on (trim(a.YieldTreeName)=trim(b.YieldTreeName)) and (a.Version=b.max_version)
+    )
+    select distinct * from 
+    (
+      (
+      select distinct 
+            trim(YieldTreeName) as YieldTreeName
+            , Version
+            , PrimaryCutProduct as l0_Product
+            , PrimaryCutProductDescription as l0_ProductDescription
+            #, PrimaryCutYield as l0_yield
+            , (case
+            when lower(PrimaryCutProductDescription) like '%carcas%' then 1 # if its a carcase then cant trust the yield. So make it 1. Best keeping it in to traverse but should be 100% not < 100% for our purpose
+            else PrimaryCutYield
+            end) as l0_yield
+            , SecondaryCutProduct as l1_Product
+            , SecondaryCutProductDescription as l1_ProductDescription
+            , SecondaryCutYield as l1_yield
+          FROM dat
+      )
+      union all
+      (
+      select distinct 
+            trim(YieldTreeName) as YieldTreeName
+            , Version
+            , PrimaryCutProduct as l0_Product
+            , PrimaryCutProductDescription as l0_ProductDescription
+            #, PrimaryCutYield as l0_yield
+            , (case
+            when lower(PrimaryCutProductDescription) like '%carcas%' then  1 # if its a carcase then cant trust the yield. So make it 1. Best keeping it in to traverse but should be 100% not < 100% for our purpose
+            else PrimaryCutYield
+            end) as l0_yield
+            , OffCutProduct as l1_Product
+            , OffCutProductDescription as l1_ProductDescription
+            , OffCutYield as l1_yield
+          FROM dat
+      )
+    )
+    where l0_Product is not null and l1_Product is not null
+  );
+  """;
+
+##
+## Get distinct primary, secondary and primary, offcuts products for 
+## PrimaryCutOrder > min_PrimaryCutOrder for YieldTreeName, Version
+## This is basically the non-carcass level stuff. 
+## at this level the secondary and offcut yields are meaningful but not PrimaryCutYield as these (i believe) are all zero's
+## So would need to traverse up the tree to find what yield(s) to multiply by to get a final yield.
+EXECUTE IMMEDIATE """
+create or replace temp table yt_non_carcass_data as (
+    with dat as (
+      select a.*
+      from 
+      (select * from 
+      """
+      || yt_pdt ||
+      """
+       where PrimaryCutYield = 0) a
+       inner join yt_max_version b
+        on (trim(a.YieldTreeName)=trim(b.YieldTreeName)) and (a.Version=b.max_version)
+    )
+    select distinct * from 
+    (
+      (
+      select distinct 
+            trim(YieldTreeName) as YieldTreeName
+            , Version
+            , PrimaryCutProduct as l0_Product
+            , PrimaryCutProductDescription as l0_ProductDescription
+            , PrimaryCutYield as l0_yield
+            , SecondaryCutProduct as l1_Product
+            , SecondaryCutProductDescription as l1_ProductDescription
+            , SecondaryCutYield as l1_yield
+          FROM dat
+      )
+      union all
+      (
+      select distinct 
+            trim(YieldTreeName) as YieldTreeName
+            , Version
+            , PrimaryCutProduct as l0_Product
+            , PrimaryCutProductDescription as l0_ProductDescription
+            , PrimaryCutYield as l0_yield
+            , OffCutProduct as l1_Product
+            , OffCutProductDescription as l1_ProductDescription
+            , OffCutYield as l1_yield
+          FROM dat
+      )
+    )
+    where l0_Product is not null and l1_Product is not null
+  );
+  """;
+
+-- select * from yt_non_carcass_data b;
+
+##
+## next step is to get to a wide representation of tree traversal
+## loop through to expand the below code out to whatever depth i select
+
+## hardcoded version looks like this:
+IF FALSE THEN
+
+  create temp table l1_data as (
+  select a.*,
+  b.l1_Product as l2_Product, b.l1_ProductDescription as l2_ProductDescription, b.l1_yield as l2_yield
+  from 
+  yt_carcass_data a
+  left join
+  yt_non_carcass_data b
+  on (a.YieldTreeName=b.YieldTreeName) and (a.Version=b.Version) and (a.l1_Product=b.l0_Product) and (a.l1_ProductDescription=b.l0_ProductDescription)
+  );
+
+  create temp table l2_data as (
+  select a.*,
+  b.l1_Product as l3_Product, b.l1_ProductDescription as l3_ProductDescription, b.l1_yield as l3_yield
+  from 
+  l1_data a
+  left join
+  yt_non_carcass_data b
+  on (a.YieldTreeName=b.YieldTreeName) and (a.Version=b.Version) and (a.l2_Product=b.l0_Product) and (a.l2_ProductDescription=b.l0_ProductDescription)
+  where a.YieldTreeName = 'Quintiq- Teys Tamworth'
+  );
+
+  # ... would get rather repetitive. And any changes in future would then need repeating each iteration.
+
+END IF;
+## but no point hardcoding same logic down the page many times so lets instead loop it.
+# I'm choosing to first create l1_data and then within loop join that on to yt_non_carcass_data
+# each step after that would just create next level L data e.g. l2_data, l3_data ..., join on a level L each time, and rename new columns to as level L _[column name ignoring level info]
+
+# i should be 1 for 1st iteration
+set i = 1;
+
+ WHILE i < max_depth DO
+    
+    set temp_str0 = cast(i-1 as string);
+    set temp_str1 = cast(i as string);
+    set temp_str2 = cast(i+1 as string);
+  
+    IF i = 1 THEN
+      create temp table l1_data as (
+      select a.*,
+      b.l1_Product as l2_Product, b.l1_ProductDescription as l2_ProductDescription, b.l1_yield as l2_yield
+      from 
+      yt_carcass_data a
+      left join
+      yt_non_carcass_data b
+      on (a.YieldTreeName=b.YieldTreeName) and (a.Version=b.Version) and (a.l1_Product=b.l0_Product) and (a.l1_ProductDescription=b.l0_ProductDescription)
+      );
+      
+    ELSE
+      EXECUTE IMMEDIATE 
+      "create temp table l"||temp_str1||"""_data as (
+        select a.*,
+        b.l1_Product as l"""||temp_str2||"_Product, b.l1_ProductDescription as l"||temp_str2||"_ProductDescription, b.l1_yield as l"||temp_str2||"""_yield
+        from 
+        l"""||temp_str0||"""_data a
+        left join
+        yt_non_carcass_data b
+        on (a.YieldTreeName=b.YieldTreeName) and (a.Version=b.Version) and (a.l"""||temp_str1||"_Product=b.l0_Product) and (a.l"||temp_str1||"""_ProductDescription=b.l0_ProductDescription)
+        );
+      """;
+
+    END IF;
+    # increment i for next while loop
+    set i = i+1;
+ END WHILE;
+
+##
+## Now loop through to create a string which summarises the tree traversal
+## e.g.
+  --   select concat(
+  --   ifnull( concat(' -> ', 'Product: ', cast(l0_Product as string), ' ProductDescription: ', l0_ProductDescription, ' yield: ', cast(l0_yield as string), '\n'), ''),
+  --   ifnull( concat(' -> ', 'Product: ', cast(l1_Product as string), ' ProductDescription: ', l1_ProductDescription, ' yield: ', cast(l1_yield as string), '\n'), ''),
+  --   ifnull( concat(' -> ', 'Product: ', cast(l2_Product as string), ' ProductDescription: ', l2_ProductDescription, ' yield: ', cast(l2_yield as string), '\n'), ''),
+  --   ifnull( concat(' -> ', 'Product: ', cast(l3_Product as string), ' ProductDescription: ', l3_ProductDescription, ' yield: ', cast(l3_yield as string), '\n'), ''),
+  --   ifnull( concat(' -> ', 'Product: ', cast(l4_Product as string), ' ProductDescription: ', l4_ProductDescription, ' yield: ', cast(l4_yield as string), '\n'), ''),
+  --   ifnull( concat(' -> ', 'Product: ', cast(l5_Product as string), ' ProductDescription: ', l5_ProductDescription, ' yield: ', cast(l5_yield as string), '\n'), ''),
+  --   ifnull( concat(' -> ', 'Product: ', cast(l6_Product as string), ' ProductDescription: ', l6_ProductDescription, ' yield: ', cast(l6_yield as string), '\n'), ''),
+  --   ifnull( concat(' -> ', 'Product: ', cast(l7_Product as string), ' ProductDescription: ', l7_ProductDescription, ' yield: ', cast(l7_yield as string), '\n'), '')
+  -- ) as tree_string, *
+  -- FROM `gcp-wow-pvc-grnstck-prod._script89797e9d4bc5efe963816ddd285f75e04f01e2b7.l6_data`;
+
+
+CREATE TEMP FUNCTION gen_tree_sql(i int64)
+  RETURNS STRING
+  AS ("ifnull( concat(' -> ', 'Product: ', cast(l"||cast(i as string)||
+  "_Product as string), ' ProductDescription: ', l"||cast(i as string)||
+  "_ProductDescription, ' yield: ', cast(l"||cast(i as string)||
+  "_yield as string)),'')");
+
+set i = 0;
+set str_tree_string = 'concat( '; # open concat
+
+ WHILE i <= max_depth DO
+    set str_tree_string = str_tree_string||gen_tree_sql(i);
+    IF i != max_depth THEN
+      set str_tree_string = str_tree_string||', ';
+    END IF;
+    IF i = max_depth THEN
+      set str_tree_string = str_tree_string||') '; # close concat
+    END IF;
+    # increment i for next while loop
+    set i = i+1;
+ END WHILE;
+
+-- set str_tree_string = concat('select ', str_tree_string, " as tree_string", ", * FROM l"||cast(max_depth-1 as string)||"_data ;");
+-- execute immediate str_tree_string;
+
+##
+## Now multiply yields to get a single yield for product
+## e.g.
+-- select
+--     (case when l0_yield is null then 1 else l0_yield end)*
+--     (case when l1_yield is null then 1 else l1_yield end)*
+--     (case when l2_yield is null then 1 else l2_yield end)*
+--     (case when l3_yield is null then 1 else l3_yield end)*
+--     (case when l4_yield is null then 1 else l4_yield end)*
+--     (case when l5_yield is null then 1 else l5_yield end)*
+--     (case when l6_yield is null then 1 else l6_yield end)*
+--     (case when l7_yield is null then 1 else l7_yield end)
+--   FROM `gcp-wow-pvc-grnstck-prod._scripte9b2fc7a5d85b6e9d1d5c9afb1ddce0703011edb.l6_data`
+
+CREATE TEMP FUNCTION gen_multiply_yields_sql(i int64)
+  RETURNS STRING
+  AS ("(case when l"||cast(i as string)||"_yield is null then 1 else l"||cast(i as string)||"_yield end)");
+  --AS ("(case when l"||cast(i as string)||"_yield is null then 1 when l"||cast(i as string)||"_yield = 0 then 1 else l"||cast(i as string)||"_yield end)");
+
+set i = 0;
+set str_yield_multiple = '';
+
+ WHILE i <= max_depth DO
+    set str_yield_multiple = str_yield_multiple||gen_multiply_yields_sql(i);
+    IF i != max_depth THEN
+      set str_yield_multiple = str_yield_multiple||'*';
+    END IF;
+    # increment i for next while loop
+    set i = i+1;
+ END WHILE;
+
+-- set temp_str2 = concat('select ', str_yield_multiple, " as net_yield", ", * FROM l"||cast(max_depth-1 as string)||"_data ;");
+-- execute immediate temp_str2;
+
+
+##
+## Now yield multiplier sql
+## so for each ProductDescription l0, l1 .. l[max_depth] use the max yield multiplier
+CREATE TEMP FUNCTION gen_yield_multiplier_sql(i int64)
+  RETURNS STRING
+  AS ( """(case when REGEXP_CONTAINS(l"""||cast(i as string)||"""_ProductDescription, r'.*(<|>|=)+[ ]?[0-9]+.*') then 2
+  else 1
+  end)"""
+  );
+
+# e.g.
+-- select * from
+-- (
+--   (select gen_yield_multiplier_sql("cow but <=250kg blah") as xx)
+--   union all
+--   (select gen_yield_multiplier_sql("cow but <= 100kg beep boop") as xx)
+--   union all
+--   (select gen_yield_multiplier_sql("ribs") as xx)
+-- )
+-- =>
+-- Row	xx	
+-- 2.0	
+-- 2.0
+-- 1.0
+-- 1.0
+
+#select gen_yield_multiplier_sql(l0_ProductDescription), * from l6_data;
+
+set i = 0;
+set str_yield_multiplier = 'greatest('; # open greatest
+
+ WHILE i <= max_depth DO
+    set str_yield_multiplier = str_yield_multiplier||gen_yield_multiplier_sql(i);
+    IF i != max_depth THEN
+      set str_yield_multiplier = str_yield_multiplier||', ';
+    END IF;
+    IF i = max_depth THEN
+      set str_yield_multiplier = str_yield_multiplier||') '; # close greatest
+    END IF;
+    # increment i for next while loop
+    set i = i+1;
+ END WHILE;
+
+
+##
+## we have products as l0, l1 .. l[max_depth]. Some end at l2, others l3 etc.
+## Will be nice to have some end_of_the_line volumns for Product, ProductDescription, yield. So we can easily use the data to answer questions like 'what is the yield for product p'
+## given a tree string prob simplest way is to find the last -> then look right and find 'Product:', 'ProductDescription:', 'yield:'
+set sql_last_Product = "trim( array_reverse(regexp_extract_all( array_reverse(split(tree_string,\'->\'))[offset(0)], r'Product:(.*)ProductDescription:'))[offset(0)] )";
+set sql_last_ProductDescription = "trim( array_reverse(regexp_extract_all( array_reverse(split(tree_string,\'->\'))[offset(0)], r'ProductDescription:(.*)yield:'))[offset(0)] )";
+
+##
+## combine ingredients into single sql statement
+set final_sql0 = concat('create or replace temp table final0 as (',
+    'select ', 
+        str_tree_string, " as tree_string, ",
+        str_yield_multiple, " as net_yield, ", 
+        str_yield_multiplier, " as yield_multiplier, ",
+        " * FROM l"||cast(max_depth-1 as string)||"_data ",
+        ");"
+);
+execute immediate final_sql0;
+
+set final_sql1 = concat('create or replace temp table final1 as (',
+    'select ', 
+        sql_last_Product, " as last_Product, ",
+        sql_last_ProductDescription, " as last_ProductDescription, ", 
+        "net_yield*yield_multiplier ", " as final_yield,",
+        " * FROM final0 ",
+        ");"
+        );
+
+execute immediate final_sql1;
+
+execute immediate concat(
+"create or replace table `gcp-wow-pvc-grnstck-prod.analytics.yield_trees_reshaped` as (",
+"select * from final1 ", #"where final_yield <= 1 and final_yield >= 0",
+");"
+);
+
+## Now the issue is we have many cases of e.g. a -> b -> c -> d but not a -> b -> c
+# so to get all combo run the code below
+CREATE TEMP FUNCTION parent(x string)
+RETURNS string
+LANGUAGE js AS r"""
+  return x.split("->").slice(0,-1).join('->').trim();
+""";
+# e.g. parent('a -> b -> c -> d') => 'a -> b -> c'
+
+CREATE TEMP FUNCTION cumulative_prod_array(x ARRAY<STRING>, y STRING) # where x is array of yields and y is tree string
+RETURNS float64
+LANGUAGE js AS r"""
+  x[0] = y.includes('carcas') ? 1 : x[0];
+  return x.reduce((a,b) => (a == 0 ? 0 : a)*(b == 0 ? 0 : b));
+""";
+# e.g. ["1","2","3","4"].reduce((x,y) => x*y) => 24 , yes javascript converts strings to multiply we neednt do that ourselves.
+# e.g. ["1","2","3","0"].reduce((x,y) => x*y) => 0 , if there's a zero yield we have issues.
+# e.g. ["1","2","3","0"].reduce((x,y) => (x == 0 ? 1 : x)*(y == 0 ? 1 : y)) => 6 , so if there's a zero yield change to 1? no, doing so caused problems e.g. bolar blade 697895 max yield of 9%!!
+# but if yield string contains carcass can get weird things like [0.001, 0.5, 0.5] where the 0.001 is actually to be multiplied out as a 1.
+
+## Now create all possible parent of parents
+## so we'll have child, parent1, parent2, parent3 etc
+## where parent2 is parent of parent. parent3 is parent of parent2 etc.
+create or replace temp table all_yt_parent_child_combos as (
+    with dat as (
+      select distinct YieldTreeName, Version, trim(tree_string) as tree_string
+    from `gcp-wow-pvc-grnstck-prod.analytics.yield_trees_reshaped`
+    ),
+    dat2 as (
+    select YieldTreeName, Version, tree_string as child, parent(tree_string) as parent1
+    from dat
+    ),
+    dat3 as (
+    select *, 
+    parent(parent1) as parent2
+    from dat2
+    ),
+    dat4 as (
+    select *, 
+    parent(parent2) as parent3
+    from dat3
+    ),
+    dat5 as (
+    select *, 
+    parent(parent3) as parent4
+    from dat4
+    ),
+    dat6 as (
+    select *, 
+    parent(parent4) as parent5
+    from dat5
+    ),
+    dat7 as (
+    select *, 
+    parent(parent5) as parent6
+    from dat6
+    ),
+    dat8 as (
+    select *, 
+    parent(parent6) as parent7
+    from dat7
+    ),
+    dat9 as (
+    select *, 
+    parent(parent7) as parent8
+    from dat8
+    ),
+    stacked_child_parent as (
+      select distinct * from
+      (
+      (select distinct YieldTreeName, Version, child, parent1 as parent from dat2)
+      union all
+      (select distinct YieldTreeName, Version, parent1 as child, parent2 as parent from dat3)
+      union all
+      (select distinct YieldTreeName, Version, parent2 as child, parent3 as parent from dat4)
+      union all
+      (select distinct YieldTreeName, Version, parent3 as child, parent4 as parent from dat5)
+      union all
+      (select distinct YieldTreeName, Version, parent4 as child, parent5 as parent from dat6)
+      union all
+      (select distinct YieldTreeName, Version, parent5 as child, parent6 as parent from dat7)
+      union all
+      (select distinct YieldTreeName, Version, parent6 as child, parent7 as parent from dat8)
+      union all
+      (select distinct YieldTreeName, Version, parent7 as child, parent8 as parent from dat9)
+      )
+    ),
+    all_distinct as (
+      select distinct * from
+      (select distinct YieldTreeName, Version, child as tree_string from stacked_child_parent)
+      union all
+      (select distinct YieldTreeName, Version, parent as tree_string  from stacked_child_parent)
+    )
+    select *,
+    cumulative_prod_array( regexp_extract_all(tree_string, r'yield: ([0-9.]+)'), tree_string ) as net_yield,
+    trim( array_reverse(regexp_extract_all( array_reverse(split(tree_string,'->'))[offset(0)], r'Product:(.*)ProductDescription:'))[offset(0)] ) as last_Product,
+    trim( array_reverse(regexp_extract_all( array_reverse(split(tree_string,'->'))[offset(0)], r'ProductDescription:(.*)yield:'))[offset(0)] ) as last_ProductDescription,
+    (case when REGEXP_CONTAINS(tree_string, r'.*(<|>|=)+[ ]?[0-9]+.*') then 2  else 1  end) as yield_multiplier, 
+    from all_distinct
+    where tree_string != ''
+    order by tree_string
+
+    -- select YieldTreeName,	Version,	tree_string,
+    -- trim( array_reverse(regexp_extract_all( array_reverse(split(tree_string,'->'))[offset(0)], r'Product:(.*)ProductDescription:'))[offset(0)] ) as last_Product,
+    -- trim( array_reverse(regexp_extract_all( array_reverse(split(tree_string,'->'))[offset(0)], r'ProductDescription:(.*)yield:'))[offset(0)] ) as last_ProductDescription,
+    -- cumulative_prod_array( regexp_extract_all(tree_string, r'yield: ([0-9.]+)') ) as net_yield--,
+    -- --yield_multiplier,
+    -- --final_yield,
+    -- from all_distinct
+    -- where tree_string != ''
+    -- order by tree_string
+
+    -- select *
+    -- , cumulative_prod_array( regexp_extract_all(tree_string, r'yield: ([0-9.]+)') ) as net_yield
+    -- from all_distinct
+    -- where tree_string != ''
+    -- order by tree_string
+
+);
+
+set final_sql2 = concat('create or replace temp table final_all_combo_0 as (',
+        "select * ,",
+        "net_yield*yield_multiplier ", " as final_yield",
+        " from all_yt_parent_child_combos ",
+        ");"
+);
+execute immediate final_sql2;
+
+# now replace `gcp-wow-pvc-grnstck-prod.analytics.yield_trees_reshaped` with all these combos
+create or replace table `gcp-wow-pvc-grnstck-prod.analytics.yield_trees_reshaped` as select * from final_all_combo_0;
