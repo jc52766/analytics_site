@@ -132,6 +132,7 @@ def demand_as_cattle(request):
                     'min_date' : df_demand_as_cattle.fiscalWeekStartDate.min(),
                     'distinct_cattle_type' : df_demand_as_cattle.master_cattle_type.sort_values().unique(),
                     'distinct_crm_site' : df_demand_as_cattle.crm_site.sort_values().unique(),
+                    'distinct_species' : df_demand_as_cattle.species.sort_values().unique(),
                     })
 
 def yield_trees(request):

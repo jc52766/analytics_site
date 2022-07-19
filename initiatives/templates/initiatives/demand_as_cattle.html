@@ -48,12 +48,15 @@
         xdate = document.getElementById('date_dropdown').value;
         xcrm_site = document.getElementById('crm_site_dropdown').value;
         xcattle_type = document.getElementById('cattle_type_dropdown').value;
+        xspecies = document.getElementById('species_dropdown').value;
         if (xdate == null){var xdate = 'All';}
         if (xcrm_site == null){var xcrm_site = 'All';}
         if (xcattle_type == null){var xcattle_type = 'All';}
+        if (xspecies == null){var xcattle_type = 'BEEF';}
         // remove rows with invalid dates or crm site
         let df = all_data['danfo_df'];
         let df2 = df;
+        df2 = df2.iloc({rows: df2["species"].eq(xspecies)}).resetIndex();
         if (xdate != 'All'){
             df2 = df2.iloc({rows: df2["fiscalWeekStartDate"].eq(xdate)}).resetIndex();
         }
@@ -171,6 +174,13 @@
 {% block content %}
 
 <div>
+
+    <label for="species">Species:</label>
+    <select name="species" id="species_dropdown" onchange="draw_DAC_bar();">
+    {% for sp in distinct_species %}
+        <option value="{{sp}}">{{sp}}</option>
+    {% endfor %}
+    </select>
 
     <label for="date">Date:</label>
     <select name="date" id="date_dropdown" onchange="draw_DAC_bar();">
