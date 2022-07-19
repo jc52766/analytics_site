@@ -120,7 +120,7 @@ def demand_as_cattle(request):
     
     # wide data for line chart
     #wide_dat = df_demand_as_cattle.pivot(index='fiscalWeekStartDate',columns='primal_group',values='heads').reset_index().fillna(0)
-    wide_dat = df_demand_as_cattle.pivot(index=['fiscalWeekStartDate','master_cattle_type','crm_site'],columns='primal_group',values='heads').reset_index().fillna(0)
+    wide_dat = df_demand_as_cattle.pivot(index=['fiscalWeekStartDate','master_cattle_type','crm_site','species'],columns='primal_group',values='heads').reset_index().fillna(0)
     
     return render(request, 'initiatives/demand_as_cattle.html',
                     {#'title': 'Demand As Cattle',

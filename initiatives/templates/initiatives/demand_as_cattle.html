@@ -52,7 +52,7 @@
         if (xdate == null){var xdate = 'All';}
         if (xcrm_site == null){var xcrm_site = 'All';}
         if (xcattle_type == null){var xcattle_type = 'All';}
-        if (xspecies == null){var xcattle_type = 'BEEF';}
+        if (xspecies == null){var xspecies = 'BEEF';}
         // remove rows with invalid dates or crm site
         let df = all_data['danfo_df'];
         let df2 = df;
@@ -73,11 +73,14 @@
         // no need to filter a date on line plot but filter on other selections
         xcrm_site = document.getElementById('crm_site_dropdown').value;
         xcattle_type = document.getElementById('cattle_type_dropdown').value;
+        xspecies = document.getElementById('species_dropdown').value;
         if (xcrm_site == null){var xcrm_site = 'All';}
         if (xcattle_type == null){var xcattle_type = 'All';}
+        if (xspecies == null){var xspecies = 'BEEF';}
         // remove rows with invalid dates or crm site
         let df = all_data_wide['danfo_df'];
         let df2 = df;
+        df2 = df2.iloc({rows: df2["species"].eq(xspecies)}).resetIndex();
         if (xcrm_site != 'All'){
             df2 = df2.iloc({rows: df2["crm_site"].eq(xcrm_site)}).resetIndex();
         }
@@ -98,7 +101,7 @@
     }
 
     function gen_data_line(){
-        let data = filter_data_wide().drop({columns: ['master_cattle_type', 'crm_site']});
+        let data = filter_data_wide().drop({columns: ['master_cattle_type', 'crm_site','species']});
         // aggregate data as primal_group, sum(heads)
         data = data.groupby(['fiscalWeekStartDate']).sum().sortValues('fiscalWeekStartDate', {ascending:true})
         // doing above sum adds _sum to end of column names so rename them
@@ -176,7 +179,7 @@
 <div>
 
     <label for="species">Species:</label>
-    <select name="species" id="species_dropdown" onchange="draw_DAC_bar();">
+    <select name="species" id="species_dropdown" onchange="draw_DAC_bar();draw_DAC_line();">
     {% for sp in distinct_species %}
         <option value="{{sp}}">{{sp}}</option>
     {% endfor %}
