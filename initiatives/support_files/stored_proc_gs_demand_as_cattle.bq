@@ -1,4 +1,3 @@
-CREATE OR REPLACE PROCEDURE `gcp-wow-pvc-grnstck-prod.analytics.gs_demand_as_cattle`()
 BEGIN
 
 /*
@@ -25,16 +24,16 @@ select
   ,product_name_group
   ,master_cattle_type
   , CASE 
-      WHEN LOWER(product_name_group) IN ('chuck dicing','chuck eye log') THEN 'TEMP Chuck Dicing / Eye Log'
-      WHEN LOWER(product_name_group) IN ('ribs prepared', 'tomahawk') THEN 'TEMP Tomahawk / Ribs Prepared'
+      WHEN species = 'BEEF' and LOWER(product_name_group) IN ('chuck dicing','chuck eye log') THEN 'TEMP Chuck Dicing / Eye Log'
+      WHEN species = 'BEEF' and LOWER(product_name_group) IN ('ribs prepared', 'tomahawk') THEN 'TEMP Tomahawk / Ribs Prepared'
       ELSE product_name_group
     END AS primal_group_TEMP  
   , CASE 
-      WHEN LOWER(product_name_group) IN ('rump','rostbiff') THEN 'Rump / Rostbiff'
-      WHEN LOWER(product_name_group) IN ('chuck roll','chuck dicing','chuck eye log') THEN 'Chuck Roll / Dicing'
-      WHEN LOWER(product_name_group) IN ('shortloin','striploin') THEN 'Striploin / Shortloin'
-      WHEN LOWER(product_name_group) IN ('cube roll','ribs prepared', 'tomahawk') THEN 'Cube Roll / Tomahawk / Ribs Prepared'
-      WHEN LOWER(product_name_group) IN ('tenderloin','butt tenderloin') THEN 'Tenderloin'
+      WHEN species = 'BEEF' and LOWER(product_name_group) IN ('rump','rostbiff') THEN 'Rump / Rostbiff'
+      WHEN species = 'BEEF' and LOWER(product_name_group) IN ('chuck roll','chuck dicing','chuck eye log') THEN 'Chuck Roll / Dicing'
+      WHEN species = 'BEEF' and LOWER(product_name_group) IN ('shortloin','striploin') THEN 'Striploin / Shortloin'
+      WHEN species = 'BEEF' and LOWER(product_name_group) IN ('cube roll','ribs prepared', 'tomahawk') THEN 'Cube Roll / Tomahawk / Ribs Prepared'
+      WHEN species = 'BEEF' and LOWER(product_name_group) IN ('tenderloin','butt tenderloin') THEN 'Tenderloin'
       ELSE product_name_group
     END AS primal_group
   ,SUM(proposed_purchases) AS proposed_purchases
@@ -58,7 +57,10 @@ where (
       (YieldTreeName = '100 Day GF') or
       (YieldTreeName = 'Current ACC Offal Yield Tree') or
       (YieldTreeName = 'Grassfed Cost Model New') or
-      (YieldTreeName = '*PR* Cost Model New')
+      (YieldTreeName = '*PR* Cost Model New') or
+      (YieldTreeName = 'V&V Walsh - Corrected Rack Yields') or
+      (YieldTreeName = 'Junee - Corrected Rack Yields') or
+      (YieldTreeName = 'Frews - Corrected Rack Yields')
       ) 
     and final_yield < 1 and final_yield > 0
 group by last_Product, last_ProductDescription
@@ -70,6 +72,7 @@ select
   , b.ProductDescription as product_description
   , b.yield as product_yield
   , (case #TODO: use correct weights from recent history actuals?
+  when a.species = 'LAMB' then 22
     when master_cattle_type = 'MSA' then 275
     when master_cattle_type = 'PR' then 275
     when master_cattle_type = 'grsfed' then 295
@@ -81,7 +84,7 @@ from demand_dat a
 left join wow_code_yields b
   on (a.Wow_code=b.Product)
 
-where a.species = 'BEEF'
+where a.species in ('BEEF','LAMB')
 );
 
 
@@ -132,16 +135,17 @@ GROUP BY 1,2,3,4,5,6,7
 
 create or replace table `gcp-wow-pvc-grnstck-prod.analytics.gs_demand_as_cattle` as (
 select 
+species,
   fiscalWeekStartDate
-  , master_cattle_type
+  , ifnull(master_cattle_type,'MSA') as master_cattle_type
   , crm_site
   , primal_group
   , sum(ifnull(heads,0)) as heads
 from heads_conversion_base
 where fiscalWeekStartDate > (select min(fiscalWeekStartDate) from heads_conversion_base)
 and fiscalWeekStartDate < (select max(fiscalWeekStartDate) from heads_conversion_base)
-GROUP BY 1,2,3,4
-order by fiscalWeekStartDate, master_cattle_type, primal_group
+GROUP BY 1,2,3,4,5
+order by species,fiscalWeekStartDate, master_cattle_type, primal_group
 );
 
-END;
+END
