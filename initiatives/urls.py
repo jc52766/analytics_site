@@ -15,4 +15,8 @@ urlpatterns = [
     path('demand_as_cattle/', views.demand_as_cattle, name='demand_as_cattle'),
     path('yield_trees/', views.yield_trees, name='yield_trees'),
     path('news/', views.news, name='news'),
+    path('plan/', views.plan, name='plan'),
+    path('buy/', views.buy, name='buy'),
+    path('make/', views.make, name='make'),
+    path('sell/', views.sell, name='sell'),
 ]

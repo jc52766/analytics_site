@@ -16,6 +16,30 @@ def news(request):
                    #'subheading': 'Your one stop shop for GS Project Monitoring.',
                   })
 
+def plan(request):
+    return render(request, 'initiatives/plan.html',
+                  {'title': 'Plan',
+                   'subheading': 'Plan page',
+                  })
+
+def buy(request):
+    return render(request, 'initiatives/buy.html',
+                  {#'title': 'Buy',
+                   #'subheading': 'Buy page',
+                  })
+
+def make(request):
+    return render(request, 'initiatives/make.html',
+                  {'title': 'Make',
+                   'subheading': 'Make page',
+                  })
+
+def sell(request):
+    return render(request, 'initiatives/sell.html',
+                  {'title': 'Sell',
+                   'subheading': 'Sell page',
+                  })
+
 def channel_strategy(request):
     return render(request, 'initiatives/channel_strategy.html',
                   {'title': 'Channel Strategy',

@@ -1,0 +1,32 @@
+{% extends "initiatives/base.html" %}
+{% load static %}
+
+{% block headcontent %}
+
+{% endblock headcontent %}
+{% block content %}
+
+<div>
+    <h3><u>Inventory Planning</u></h3>
+
+    <h4>Dashboards:</h4>
+    <ul>
+        <li><p>3PL Monthly SOH (Tableau):</p>
+    
+        <a href="https://tableau.woolworths.com.au/#/site/Greenstock/views/SOHInclAdjustments-CurrentStockLevelandMonthlyTrends/MonthlyTrendsCurrentSOH" target="_blank">
+            <img id="3pl_monthly_soh_image" src="{% static 'initiatives/3pl_monthly_soh_tableau.PNG' %}" alt="proc_fees_tableau_image"
+            width="400" height="200"></img>
+        </a>
+    </li>
+</ul>        
+    </div>
+
+    <h4>Data Sources:</h4>
+    <ul>
+        <li><a href="https://console.cloud.google.com/bigquery?project=gcp-wow-pvc-grnstck-prod&ws=!1m5!1m4!4m3!1sgcp-wow-pvc-grnstck-prod!2sanalytics!3ssoh_daily_rec_v" target="_blank">
+        gcp-wow-pvc-grnstck-prod.analytics.soh_daily_rec_v
+        </a></li>
+    </ul>
+</div>
+
+{% endblock content %}
