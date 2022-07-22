@@ -6,8 +6,8 @@ import pandas as pd
 # Create your views here.
 def home(request):
     return render(request, 'initiatives/initiatives_home.html',
-                  {'title': 'Greenstock Project Hub',
-                   'subheading': 'Your one stop shop for GS Project Monitoring.',
+                  {'title': 'Value Chain',
+                   #'subheading': 'Your one stop shop for GS Project Monitoring.',
                   })
 
 def news(request):
