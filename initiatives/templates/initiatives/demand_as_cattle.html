@@ -133,6 +133,9 @@
             },
             vAxis: {
             title: 'Primal',
+            textStyle : {
+                fontSize: 7 // or the number you want
+            }
             }
         };
         var barPlot = new google.visualization.BarChart(document.getElementById('dac_plot_bar'));
@@ -156,7 +159,10 @@
             minValue: 0,
             viewWindow:{
                 min:0,
-              }
+              },
+              textStyle : {
+                fontSize: 7 // or the number you want
+            }
             }
         };
         var lineChart = new google.visualization.LineChart(document.getElementById('dac_plot_line'));

@@ -110,11 +110,11 @@ def demand_as_cattle(request):
     storage_client = hlp.connectStorage()
     # get cost per kg data
     df_demand_as_cattle = pd.read_json(hlp.get_file_from_bucket(client=storage_client, bucket='gs_website', fn='data/demand_as_cattle_summary.json').download_as_bytes().decode(), lines=False).fillna(0).sort_values(by=["heads"], ascending=False).reset_index()
-    df_demand_as_cattle = df_demand_as_cattle.query("heads > 0")
+    #df_demand_as_cattle = df_demand_as_cattle.query("heads > 0")
     
-    values_to_remove = ['trim','fat'] #['trim','fat','tomahawk','ribs prepared','bone','shank hq']
-    pattern = '|'.join(values_to_remove)
-    df_demand_as_cattle = df_demand_as_cattle.loc[~df_demand_as_cattle['primal_group'].str.contains(pattern, case=False, regex=True)].reset_index()
+    # values_to_remove = ['trim','fat'] #['trim','fat','tomahawk','ribs prepared','bone','shank hq']
+    # pattern = '|'.join(values_to_remove)
+    # df_demand_as_cattle = df_demand_as_cattle.loc[~df_demand_as_cattle['primal_group'].str.contains(pattern, case=False, regex=True)].reset_index()
     
     df_demand_as_cattle.heads = df_demand_as_cattle.heads.round()
     
